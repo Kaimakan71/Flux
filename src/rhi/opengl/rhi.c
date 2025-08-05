@@ -55,10 +55,6 @@ rhiOpenglInitialize(FluxRhi *rhi)
         return FLUX_STATUS_INCOMPATIBLE_DRIVER;
     }
 
-    fluxLogDebug("vendor: \"%s\"", glGetString(GL_VENDOR));
-    fluxLogDebug("renderer: \"%s\"", glGetString(GL_RENDERER));
-    fluxLogDebug("version: \"%s\"", glGetString(GL_VERSION));
-
     rhi->data = NULL;
     rhi->createDevice = rhiOpenglCreateDevice;
     rhi->destroyDevice = rhiOpenglDestroyDevice;

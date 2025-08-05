@@ -18,6 +18,14 @@ typedef struct FluxRhiDevice_T {
     GLFWwindow *window;
 } RhiOpenglDevice;
 
+static inline void
+rhiOpenglBindDevice(RhiOpenglDevice *device)
+{
+    if (glfwGetCurrentContext() != device->window) {
+        glfwMakeContextCurrent(device->window);
+    }
+}
+
 FluxStatus rhiOpenglCreateDevice(FluxRhi *rhi, GLFWwindow *window, RhiOpenglDevice **deviceOut);
 void rhiOpenglDestroyDevice(FluxRhi *rhi, RhiOpenglDevice *device);
 

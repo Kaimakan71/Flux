@@ -44,6 +44,11 @@ rhiOpenglCreateDevice(FluxRhi *rhi, GLFWwindow *window, RhiOpenglDevice **device
 
     device->window = window;
 
+    rhiOpenglBindDevice(device);
+    fluxLogDebug("vendor: \"%s\"", glGetString(GL_VENDOR));
+    fluxLogDebug("renderer: \"%s\"", glGetString(GL_RENDERER));
+    fluxLogDebug("version: \"%s\"", glGetString(GL_VERSION));
+
     *deviceOut = device;
     return FLUX_STATUS_SUCCESS;
 }
