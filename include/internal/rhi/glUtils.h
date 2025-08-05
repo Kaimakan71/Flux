@@ -7,8 +7,8 @@
 
 #pragma once
 
-#ifndef _RHI_GLUTILS_H
-#define _RHI_GLUTILS_H
+#ifndef _RHI_GL_UTILS_H
+#define _RHI_GL_UTILS_H
 
 #define GL_FALSE 0
 #define GL_TRUE  1
@@ -465,4 +465,4 @@ GLboolean glUtilsLoadSymbols(GlUtilsGetSymbolAddress getSymbolAddress, GlUtilsLi
 }
 #endif
 
-#endif /* !_RHI_GLUTILS_H */
+#endif /* !_RHI_GL_UTILS_H */

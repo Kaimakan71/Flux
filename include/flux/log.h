@@ -11,7 +11,7 @@
 #define _FLUX_LOG_H
 
 void __fluxLogDebug(const char *function, const char *format, ...);
-#if defined(FLUX_LOG_DEBUG_ENABLED)
+#if defined(FLUX_DEBUG_ENABLED)
 #define fluxLogDebug(...) __fluxLogDebug(__FUNCTION__, __VA_ARGS__)
 #else
 #define fluxLogDebug(...)

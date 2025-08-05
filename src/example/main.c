@@ -61,6 +61,7 @@ main(int argc, char **argv)
     GLFWwindow *window;
     FluxStatus status;
     FluxRhi rhi;
+    FluxRhiDevice device;
 
     if (argc >= 2) {
         if (strcmp(argv[1], "vulkan") == 0) {
@@ -91,6 +92,17 @@ main(int argc, char **argv)
     status = fluxRhiInitialize(&rhi, rhiType);
     if (status != FLUX_STATUS_SUCCESS) {
         fprintf(stderr, "failed to initialize RHI\n");
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return EXIT_FAILURE;
+    }
+
+    status = rhi.createDevice(&rhi, window, &device);
+    if (status != FLUX_STATUS_SUCCESS) {
+        fprintf(stderr, "failed to create device\n");
+        rhi.shutdown(&rhi);
+        glfwDestroyWindow(window);
+        glfwTerminate();
         return EXIT_FAILURE;
     }
 
@@ -101,6 +113,7 @@ main(int argc, char **argv)
     }
     glfwHideWindow(window);
 
+    rhi.destroyDevice(&rhi, device);
     rhi.shutdown(&rhi);
     glfwDestroyWindow(window);
     glfwTerminate();

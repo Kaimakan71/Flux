@@ -15,7 +15,7 @@ __vkUtilsLogDebug(const char* pFunctionName, const char* pFormat, ...)
 {
     va_list argumentList;
 
-    printf("\033[1;90m[vkUtils debug]\033[0m %s(): ", pFunctionName);
+    printf("\033[1;90m[debug]\033[0m %s(): ", pFunctionName);
     va_start(argumentList, pFormat);
     vprintf(pFormat, argumentList);
     va_end(argumentList);

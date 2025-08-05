@@ -15,8 +15,13 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+typedef struct FluxRhiDevice_T *FluxRhiDevice;
+
 typedef struct FluxRhi {
     void *data;
+
+    FluxStatus (*createDevice)(struct FluxRhi *rhi, GLFWwindow *window, FluxRhiDevice *deviceOut);
+    void (*destroyDevice)(struct FluxRhi *rhi, FluxRhiDevice device);
 
     void (*shutdown)(struct FluxRhi *rhi);
 } FluxRhi;

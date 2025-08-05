@@ -46,7 +46,7 @@ rhiVulkanShutdown(FluxRhi *rhi)
         return;
     }
 
-    fluxLogDebug("shutting down Vulkan RHI...");
+    fluxLogDebug("shutting down RHI...");
     data = rhi->data;
 
     if (data->instance != VK_NULL_HANDLE) {
@@ -86,7 +86,7 @@ rhiVulkanInitialize(FluxRhi *rhi)
         return FLUX_STATUS_INVALID_ARGUMENT;
     }
 
-    fluxLogDebug("initializing Vulkan RHI...");
+    fluxLogDebug("initializing RHI...");
 
     result = loadLibrary();
     if (result != VK_SUCCESS) {
@@ -106,6 +106,8 @@ rhiVulkanInitialize(FluxRhi *rhi)
     }
 
     rhi->data = data;
+    rhi->createDevice = rhiVulkanCreateDevice;
+    rhi->destroyDevice = rhiVulkanDestroyDevice;
     rhi->shutdown = rhiVulkanShutdown;
 
     return FLUX_STATUS_SUCCESS;

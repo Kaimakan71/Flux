@@ -14,4 +14,11 @@
 
 #include <flux/rhi.h>
 
+typedef struct FluxRhiDevice_T {
+    GLFWwindow *window;
+} RhiOpenglDevice;
+
+FluxStatus rhiOpenglCreateDevice(FluxRhi *rhi, GLFWwindow *window, RhiOpenglDevice **deviceOut);
+void rhiOpenglDestroyDevice(FluxRhi *rhi, RhiOpenglDevice *device);
+
 #endif /* !_RHI_OPENGL_H */

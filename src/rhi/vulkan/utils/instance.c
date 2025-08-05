@@ -12,6 +12,8 @@
 
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 
+#define LOAD_INSTANCE_PROC(name) pDispatchTable->name = (PFN_##name)vkGetInstanceProcAddr(instance, #name);
+
 static const char* optionalLayerNames[] = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -119,7 +121,12 @@ vkUtilsCreateInstance(const char* pApplicationName, VkInstance* pInstance, VkUti
     }
 
     /* Try to enable optional layers */
-    result = vkUtilsFilterInstanceLayerNames(ARRAY_LENGTH(optionalLayerNames), optionalLayerNames, &availableLayerCount, &availableLayerNames);
+    result = vkUtilsFilterInstanceLayerNames(
+        ARRAY_LENGTH(optionalLayerNames),
+        optionalLayerNames,
+        &availableLayerCount,
+        &availableLayerNames
+    );
     if (result != VK_SUCCESS) {
         vkUtilsLogError(result, "failed to filter optional layer names");
         availableLayerCount = 0;
@@ -153,8 +160,18 @@ vkUtilsCreateInstance(const char* pApplicationName, VkInstance* pInstance, VkUti
     }
 
     /* Load symbols into dispatch table */
-    pDispatchTable->vkDestroyInstance = (PFN_vkDestroyInstance)vkGetInstanceProcAddr(instance, "vkDestroyInstance");
-    pDispatchTable->vkEnumeratePhysicalDevices = (PFN_vkEnumeratePhysicalDevices)vkGetInstanceProcAddr(instance, "vkEnumeratePhysicalDevices");
+    LOAD_INSTANCE_PROC(vkEnumeratePhysicalDevices);
+    LOAD_INSTANCE_PROC(vkEnumerateDeviceExtensionProperties);
+    LOAD_INSTANCE_PROC(vkGetPhysicalDeviceQueueFamilyProperties);
+    LOAD_INSTANCE_PROC(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
+    LOAD_INSTANCE_PROC(vkGetPhysicalDeviceSurfaceFormatsKHR);
+    LOAD_INSTANCE_PROC(vkGetPhysicalDeviceSurfacePresentModesKHR);
+    LOAD_INSTANCE_PROC(vkGetPhysicalDeviceProperties);
+    LOAD_INSTANCE_PROC(vkGetPhysicalDeviceMemoryProperties);
+    LOAD_INSTANCE_PROC(vkCreateDevice);
+    LOAD_INSTANCE_PROC(vkGetDeviceProcAddr);
+    LOAD_INSTANCE_PROC(vkDestroySurfaceKHR);
+    LOAD_INSTANCE_PROC(vkDestroyInstance);
 
     *pInstance = instance;
     return VK_SUCCESS;

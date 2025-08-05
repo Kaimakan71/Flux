@@ -16,7 +16,7 @@ __glUtilsLogDebug(const char *functionName, const char *format, ...)
 {
     va_list argumentList;
 
-    printf("\033[1;90m[glUtils debug]\033[0m %s(): ", functionName);
+    printf("\033[1;90m[debug]\033[0m %s(): ", functionName);
     va_start(argumentList, format);
     vprintf(format, argumentList);
     va_end(argumentList);

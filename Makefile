@@ -12,10 +12,10 @@ OBJDIR = build/obj
 BINDIR = build/bin
 CFILES = \
 	$(addprefix $(SRCDIR)/rhi/opengl/utils/,strings.c log.c loader.c) \
-	$(addprefix $(SRCDIR)/rhi/vulkan/utils/,strings.c log.c loader.c wrappers.c instance.c) \
+	$(addprefix $(SRCDIR)/rhi/vulkan/utils/,strings.c log.c loader.c wrappers.c instance.c device.c swapchain.c) \
 	$(addprefix $(SRCDIR)/,log.c) \
-	$(addprefix $(SRCDIR)/rhi/opengl/,rhi.c) \
-	$(addprefix $(SRCDIR)/rhi/vulkan/,rhi.c) \
+	$(addprefix $(SRCDIR)/rhi/opengl/,device.c rhi.c) \
+	$(addprefix $(SRCDIR)/rhi/vulkan/,device.c rhi.c) \
 	$(addprefix $(SRCDIR)/rhi/,rhi.c) \
 	$(addprefix $(SRCDIR)/example/,main.c)
 CFLAGS = -Wall -Wextra -Iinclude
@@ -32,7 +32,7 @@ endif
 
 # Runtime debugging configuration
 ifeq ($(RUNTIME_DEBUG_ENABLED),1)
-CFLAGS += -DFLUX_LOG_DEBUG_ENABLED
+CFLAGS += -DFLUX_DEBUG_ENABLED -DVK_UTILS_DEBUG_ENABLED -DGL_UTILS_DEBUG_ENABLED
 endif
 
 # System-specific configuration

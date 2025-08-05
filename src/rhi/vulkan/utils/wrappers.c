@@ -46,6 +46,27 @@
     *ppDataName = pDataName; \
     return VK_SUCCESS;
 
+#define MAKE_WRAPPER_NO_API_ERROR(vkName, typeName, countName, pCountName, pDataName, ppDataName, ...) \
+    uint32_t countName; \
+    typeName* pDataName; \
+    \
+    vkName(__VA_ARGS__, &countName, NULL); \
+    if (countName < 1) { \
+        *pCountName = 0; \
+        *ppDataName = NULL; \
+        return VK_SUCCESS; \
+    } \
+    \
+    pDataName = malloc(sizeof(*pDataName) * countName); \
+    if (pDataName == NULL) { \
+        return VK_ERROR_OUT_OF_HOST_MEMORY; \
+    } \
+    \
+    vkName(__VA_ARGS__, &countName, pDataName); \
+    *pCountName = countName; \
+    *ppDataName = pDataName; \
+    return VK_SUCCESS;
+
 #define MAKE_WRAPPER_NO_ARGS(vkName, typeName, countName, pCountName, pDataName, ppDataName) \
     VkResult result; \
     uint32_t countName; \
@@ -87,4 +108,40 @@ VkResult
 vkUtilsGetInstanceExtensionProperties(const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties** ppProperties)
 {
     MAKE_WRAPPER(vkEnumerateInstanceExtensionProperties, VkExtensionProperties, propertyCount, pPropertyCount, pProperties, ppProperties, pLayerName)
+}
+
+VkResult
+vkUtilsGetDeviceExtensionProperties(PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties, VkPhysicalDevice physicalDevice, const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties** ppProperties)
+{
+    MAKE_WRAPPER(vkEnumerateDeviceExtensionProperties, VkExtensionProperties, propertyCount, pPropertyCount, pProperties, ppProperties, physicalDevice, pLayerName)
+}
+
+VkResult
+vkUtilsGetPhysicalDeviceQueueFamilyProperties(PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties, VkPhysicalDevice physicalDevice, uint32_t* pPropertyCount, VkQueueFamilyProperties** ppProperties)
+{
+    MAKE_WRAPPER_NO_API_ERROR(vkGetPhysicalDeviceQueueFamilyProperties, VkQueueFamilyProperties, propertyCount, pPropertyCount, pProperties, ppProperties, physicalDevice)
+}
+
+VkResult
+vkUtilsGetPhysicalDeviceSurfaceFormats(PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t* pFormatCount, VkSurfaceFormatKHR** ppFormats)
+{
+    MAKE_WRAPPER_NO_API_ERROR(vkGetPhysicalDeviceSurfaceFormatsKHR, VkSurfaceFormatKHR, formatCount, pFormatCount, pFormats, ppFormats, physicalDevice, surface)
+}
+
+VkResult
+vkUtilsGetPhysicalDeviceSurfacePresentModes(PFN_vkGetPhysicalDeviceSurfacePresentModesKHR vkGetPhysicalDeviceSurfacePresentModesKHR, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t* pModeCount, VkPresentModeKHR** ppModes)
+{
+    MAKE_WRAPPER_NO_API_ERROR(vkGetPhysicalDeviceSurfacePresentModesKHR, VkPresentModeKHR, modeCount, pModeCount, pModes, ppModes, physicalDevice, surface)
+}
+
+VkResult
+vkUtilsGetPhysicalDevices(PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices, VkInstance instance, uint32_t* pDeviceCount, VkPhysicalDevice** ppDevices)
+{
+    MAKE_WRAPPER(vkEnumeratePhysicalDevices, VkPhysicalDevice, deviceCount, pDeviceCount, pDevices, ppDevices, instance)
+}
+
+VkResult
+vkUtilsGetSwapchainImages(PFN_vkGetSwapchainImagesKHR vkGetSwapchainImagesKHR, VkDevice device, VkSwapchainKHR swapchain, uint32_t* pImageCount, VkImage** ppImages)
+{
+    MAKE_WRAPPER(vkGetSwapchainImagesKHR, VkImage, imageCount, pImageCount, pImages, ppImages, device, swapchain);
 }

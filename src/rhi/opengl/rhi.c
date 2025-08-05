@@ -39,7 +39,7 @@ rhiOpenglShutdown(FluxRhi *rhi)
         return;
     }
 
-    fluxLogDebug("shutting down OpenGL RHI...");
+    fluxLogDebug("shutting down RHI...");
 }
 
 FluxStatus
@@ -49,7 +49,7 @@ rhiOpenglInitialize(FluxRhi *rhi)
         return FLUX_STATUS_INVALID_ARGUMENT;
     }
 
-    fluxLogDebug("initializing OpenGL RHI...");
+    fluxLogDebug("initializing RHI...");
 
     if (!loadLibrary()) {
         return FLUX_STATUS_INCOMPATIBLE_DRIVER;
@@ -60,6 +60,8 @@ rhiOpenglInitialize(FluxRhi *rhi)
     fluxLogDebug("version: \"%s\"", glGetString(GL_VERSION));
 
     rhi->data = NULL;
+    rhi->createDevice = rhiOpenglCreateDevice;
+    rhi->destroyDevice = rhiOpenglDestroyDevice;
     rhi->shutdown = rhiOpenglShutdown;
 
     return FLUX_STATUS_SUCCESS;
