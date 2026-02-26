@@ -12,15 +12,17 @@
 namespace Flux {
 
 class VulkanCommandPool: public RHICommandPool {
-private:
+public:
 
     VulkanDevice *device;
 
     VkCommandPool pool;
 
-public:
-
     Status create(VulkanDevice *device);
+
+    virtual Status allocateCommandBuffers(uint32_t bufferCount, RHICommandBuffer **buffers);
+
+    virtual void freeCommandBuffers(uint32_t bufferCount, RHICommandBuffer *buffers);
 
     virtual void destroy(void);
 

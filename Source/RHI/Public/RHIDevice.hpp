@@ -9,7 +9,6 @@
 
 #include "RHICommandPool.hpp"
 #include "RHIPipeline.hpp"
-#include "Status.hpp"
 
 namespace Flux {
 

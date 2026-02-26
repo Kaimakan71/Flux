@@ -40,6 +40,8 @@
     macro(vkCreateShaderModule)                \
     macro(vkCreateGraphicsPipelines)           \
     macro(vkCreateCommandPool)                 \
+    macro(vkAllocateCommandBuffers)            \
+    macro(vkFreeCommandBuffers)                \
     macro(vkDestroyCommandPool)                \
     macro(vkDestroyShaderModule)               \
     macro(vkDestroyPipeline)                   \

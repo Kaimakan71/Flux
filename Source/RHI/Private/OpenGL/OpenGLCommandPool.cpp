@@ -19,4 +19,13 @@ Status OpenGLCommandPool::create(OpenGLDevice *device) {
     return Status::notImplemented;
 }
 
+Status OpenGLCommandPool::allocateCommandBuffers(uint32_t bufferCount, RHICommandBuffer **buffersOut) {
+    FLUX_LOG_ERROR("OpenGL command buffer allocation not implemented");
+    return Status::notImplemented;
+}
+
+void OpenGLCommandPool::freeCommandBuffers(uint32_t bufferCount, RHICommandBuffer *buffers) {
+
+}
+
 }

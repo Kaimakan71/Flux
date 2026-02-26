@@ -16,6 +16,10 @@ public:
 
     Status create(OpenGLDevice *device);
 
+    virtual Status allocateCommandBuffers(uint32_t bufferCount, RHICommandBuffer **buffers);
+
+    virtual void freeCommandBuffers(uint32_t bufferCount, RHICommandBuffer *buffers);
+
     virtual void destroy(void);
 
 };

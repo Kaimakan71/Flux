@@ -13,8 +13,8 @@ The `RHI` subsystem is responsible for interfacing with the graphics hardware an
 | `RHI`              | ✅     | ✅     |
 | `RHIDevice`        | ✅     | ✅     |
 | `RHIPipeline`      | ❌     | ✅     |
-| `RHICommandPool`   | ❌     | ☑️     |
-| `RHICommandBuffer` | ❌     | ❌     |
+| `RHICommandPool`   | ❌     | ✅     |
+| `RHICommandBuffer` | ❌     | ☑️     |
 * ❌: not implemented.
 * ☑️: partially implemented.
 * ✅: fully implemented (features may still be added in future versions).

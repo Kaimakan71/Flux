@@ -7,10 +7,18 @@
 
 #pragma once
 
+#include <cstdint>
+#include "RHICommandBuffer.hpp"
+#include "Status.hpp"
+
 namespace Flux {
 
 class RHICommandPool {
 public:
+
+    virtual Status allocateCommandBuffers(uint32_t bufferCount, RHICommandBuffer **buffers) = 0;
+
+    virtual void freeCommandBuffers(uint32_t bufferCount, RHICommandBuffer *buffers) = 0;
 
     virtual void destroy(void) = 0;
 

@@ -6,7 +6,7 @@
  */
 
 #include "Log.hpp"
-#include "VulkanCommandPool.hpp"
+#include "VulkanCommandBuffer.hpp"
 #include "VulkanResult.hpp"
 
 namespace Flux {
@@ -39,6 +39,75 @@ Status VulkanCommandPool::create(VulkanDevice *device) {
     }
 
     return Status::success;
+}
+
+Status VulkanCommandPool::allocateCommandBuffers(uint32_t bufferCount, RHICommandBuffer **buffersOut) {
+    VkResult result;
+    VkCommandBuffer *vkBuffers;
+    VulkanCommandBuffer *buffers;
+
+    static VkCommandBufferAllocateInfo allocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = this->pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = bufferCount,
+    };
+
+    if (bufferCount < 1) {
+        FLUX_LOG_ERROR("Invalid buffer count %u", bufferCount);
+        return Status::invalidArgument;
+    }
+
+    vkBuffers = new(std::nothrow) VkCommandBuffer[bufferCount];
+    if (vkBuffers == nullptr) {
+        return Status::hostAllocationFailed;
+    }
+
+    buffers = new(std::nothrow) VulkanCommandBuffer[bufferCount];
+    if (buffers == nullptr) {
+        delete[] vkBuffers;
+        return Status::hostAllocationFailed;
+    }
+
+    FLUX_LOG_DEBUG("Allocating command buffers...");
+    result = this->device->dispatch.vkAllocateCommandBuffers(this->device->device, &allocateInfo, vkBuffers);
+    if (result != VK_SUCCESS) {
+        delete[] buffers;
+        delete[] vkBuffers;
+        return VulkanResult::getStatus(result);
+    }
+
+    for (uint32_t b = 0; b < bufferCount; b++) {
+        buffers[b].pool = this;
+        buffers[b].buffer = vkBuffers[b];
+    }
+
+    delete[] vkBuffers;
+    *buffersOut = buffers;
+    return Status::success;
+}
+
+void VulkanCommandPool::freeCommandBuffers(uint32_t bufferCount, RHICommandBuffer *buffers) {
+    VkCommandBuffer *vkBuffers;
+
+    if (bufferCount < 1) {
+        return;
+    }
+
+    vkBuffers = new(std::nothrow) VkCommandBuffer[bufferCount];
+    if (vkBuffers == nullptr) {
+        return;
+    }
+
+    for (uint32_t b = 0; b < bufferCount; b++) {
+        vkBuffers[b] = (reinterpret_cast<VulkanCommandBuffer *>(buffers))[b].buffer;
+    }
+
+    FLUX_LOG_DEBUG("Freeing command buffers...");
+    this->device->dispatch.vkFreeCommandBuffers(this->device->device, this->pool, bufferCount, vkBuffers);
+
+    delete[] vkBuffers;
 }
 
 }
