@@ -1,14 +1,20 @@
 # Flux
+Flux is a performance-focused game engine written in C++. Flux uses GLFW to manage its windows and supports rendering with OpenGL and Vulkan. Flux's functionality is divided into the `Core` and `RHI` subsystems.
 
-Flux is a "game engine" which currently consists of an RHI (Rendering Hardware Interface) supporting OpenGL and Vulkan.
+## Core
+The `Core` subsystem is responsible for handling logging and managing windows. The header `Log.hpp` provides utilities like `FLUX_LOG_ERROR` which should be used to report the status of the application to aid in debugging and profiling. `Window.hpp` provides the `Window` class, which can be used to create windows using GLFW.
 
-# API
+## RHI (Rendering Hardware Interface)
+The `RHI` subsystem is responsible for interfacing with the graphics hardware and providing a higher-level API that requires minimal application code to handle differences between low-level rendering APIs.
 
-## `FluxRhi` (`flux/rhi.h`)
-
-Flux's RHI (Rendering Hardware Interface) is a layer over OpenGL and Vulkan that allows the application to use virtually the same rendering code no matter which underlying API the RHI is using.
-
-### Notes
-
-* Each application should only create one `FluxRhi`.
-* `fluxRhiInitialize()` should not be called until *after* the application has created its window (and its context, if using OpenGL).
+### RHI Implementation Status
+| Feature            | OpenGL | Vulkan |
+|--------------------|--------|--------|
+| `RHI`              | ✅     | ✅     |
+| `RHIDevice`        | ✅     | ✅     |
+| `RHIPipeline`      | ❌     | ✅     |
+| `RHICommandPool`   | ❌     | ☑️     |
+| `RHICommandBuffer` | ❌     | ❌     |
+* ❌: not implemented.
+* ☑️: partially implemented.
+* ✅: fully implemented (features may still be added in future versions).
