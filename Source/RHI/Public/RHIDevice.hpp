@@ -9,6 +9,7 @@
 
 #include "RHICommandPool.hpp"
 #include "RHIPipeline.hpp"
+#include "RHIRenderingAgent.hpp"
 
 namespace Flux {
 
@@ -17,7 +18,9 @@ public:
 
     virtual Status createPipeline(const RHIPipelineDescription *description, RHIPipeline **pipeline) = 0;
 
-    virtual Status createCommandPool(RHICommandPool **commandPool) = 0;
+    virtual Status createCommandPool(RHICommandPool **pool) = 0;
+
+    virtual Status createRenderingAgent(RHIRenderingAgent **agent) = 0;
 
     virtual void destroy(void) = 0;
 

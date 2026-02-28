@@ -26,7 +26,9 @@ public:
 
     virtual Status createPipeline(const RHIPipelineDescription *description, RHIPipeline **pipeline);
 
-    virtual Status createCommandPool(RHICommandPool **commandPool);
+    virtual Status createCommandPool(RHICommandPool **pool);
+
+    virtual Status createRenderingAgent(RHIRenderingAgent **agent);
 
     virtual void destroy(void);
 

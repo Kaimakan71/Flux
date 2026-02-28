@@ -41,6 +41,24 @@
     macro(vkCreateGraphicsPipelines)           \
     macro(vkCreateCommandPool)                 \
     macro(vkAllocateCommandBuffers)            \
+    macro(vkCreateSemaphore)                   \
+    macro(vkCreateFence)                       \
+    macro(vkWaitForFences)                     \
+    macro(vkResetFences)                       \
+    macro(vkAcquireNextImageKHR)               \
+    macro(vkResetCommandBuffer)                \
+    macro(vkBeginCommandBuffer)                \
+    macro(vkCmdBeginRenderPass)                \
+    macro(vkCmdBindPipeline)                   \
+    macro(vkCmdSetViewport)                    \
+    macro(vkCmdSetScissor)                     \
+    macro(vkCmdDraw)                           \
+    macro(vkCmdEndRenderPass)                  \
+    macro(vkEndCommandBuffer)                  \
+    macro(vkQueueSubmit)                       \
+    macro(vkQueuePresentKHR)                   \
+    macro(vkDestroyFence)                      \
+    macro(vkDestroySemaphore)                  \
     macro(vkFreeCommandBuffers)                \
     macro(vkDestroyCommandPool)                \
     macro(vkDestroyShaderModule)               \

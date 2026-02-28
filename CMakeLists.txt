@@ -31,6 +31,8 @@ set(RHI_OPENGL_SOURCES
     OpenGLCommandPool.cpp
     OpenGLCommandBuffer.hpp
     OpenGLCommandBuffer.cpp
+    OpenGLRenderingAgent.hpp
+    OpenGLRenderingAgent.cpp
     OpenGLDevice.hpp
     OpenGLDevice.cpp
     OpenGLRHI.hpp
@@ -54,6 +56,8 @@ set(RHI_VULKAN_SOURCES
     VulkanCommandPool.cpp
     VulkanCommandBuffer.hpp
     VulkanCommandBuffer.cpp
+    VulkanRenderingAgent.hpp
+    VulkanRenderingAgent.cpp
     VulkanDevice.hpp
     VulkanDevice.cpp
     VulkanRHI.hpp

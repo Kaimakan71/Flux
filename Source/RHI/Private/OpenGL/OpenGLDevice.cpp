@@ -10,6 +10,7 @@
 #include "OpenGLCommandPool.hpp"
 #include "OpenGLLoader.hpp"
 #include "OpenGLPipeline.hpp"
+#include "OpenGLRenderingAgent.hpp"
 
 namespace Flux {
 
@@ -60,22 +61,41 @@ Status OpenGLDevice::createPipeline(const RHIPipelineDescription *description, R
     return Status::success;
 }
 
-Status OpenGLDevice::createCommandPool(RHICommandPool **commandPoolOut) {
+Status OpenGLDevice::createCommandPool(RHICommandPool **poolOut) {
     Status status;
-    OpenGLCommandPool *commandPool;
+    OpenGLCommandPool *pool;
 
-    commandPool = new(std::nothrow) OpenGLCommandPool();
-    if (commandPool == nullptr) {
+    pool = new(std::nothrow) OpenGLCommandPool();
+    if (pool == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = commandPool->create(this);
+    status = pool->create(this);
     if (status != Status::success) {
-        delete commandPool;
+        delete pool;
         return status;
     }
 
-    *commandPoolOut = commandPool;
+    *poolOut = pool;
+    return Status::success;
+}
+
+Status OpenGLDevice::createRenderingAgent(RHIRenderingAgent **agentOut) {
+    Status status;
+    OpenGLRenderingAgent *agent;
+
+    agent = new(std::nothrow) OpenGLRenderingAgent();
+    if (agent == nullptr) {
+        return Status::hostAllocationFailed;
+    }
+
+    status = agent->create(this);
+    if (status != Status::success) {
+        delete agent;
+        return status;
+    }
+
+    *agentOut = agent;
     return Status::success;
 }
 

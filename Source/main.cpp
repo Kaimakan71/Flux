@@ -26,6 +26,8 @@ static RHI *rhi = nullptr;
 static RHIDevice *device = nullptr;
 static RHIPipeline *pipeline = nullptr;
 static RHICommandPool *commandPool = nullptr;
+static RHICommandBuffer *commandBuffer = nullptr;
+static RHIRenderingAgent *renderingAgent = nullptr;
 
 static std::vector<uint8_t> loadFile(const std::filesystem::path &path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
@@ -51,6 +53,11 @@ static std::vector<uint8_t> loadFile(const std::filesystem::path &path) {
 
 static void cleanup(void) {
     FLUX_LOG_INFO("Cleaning up...");
+
+    if (renderingAgent != nullptr) {
+        renderingAgent->destroy();
+        renderingAgent = nullptr;
+    }
 
     if (commandPool != nullptr) {
         commandPool->destroy();
@@ -139,6 +146,16 @@ static Status initialize(void) {
         return status;
     }
 
+    status = commandPool->allocateCommandBuffers(1, &commandBuffer);
+    if (status != Status::success) {
+        return status;
+    }
+
+    status = device->createRenderingAgent(&renderingAgent);
+    if (status != Status::success) {
+        return status;
+    }
+
     return Status::success;
 }
 
@@ -152,7 +169,12 @@ int main(int argc, char **argv) {
     }
 
     FLUX_LOG_INFO("Presenting window...");
-    window.present();
+    glfwShowWindow(window.handle);
+    while (!glfwWindowShouldClose(window.handle)) {
+        glfwPollEvents();
+        renderingAgent->beginFrame(commandBuffer, pipeline);
+    }
+    glfwHideWindow(window.handle);
 
     cleanup();
     return 0;

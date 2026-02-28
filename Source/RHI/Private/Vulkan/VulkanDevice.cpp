@@ -14,6 +14,7 @@
 #include "VulkanLoader.hpp"
 #include "VulkanLog.hpp"
 #include "VulkanPipeline.hpp"
+#include "VulkanRenderingAgent.hpp"
 #include "VulkanResult.hpp"
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -640,22 +641,41 @@ Status VulkanDevice::createPipeline(const RHIPipelineDescription *description, R
     return Status::success;
 }
 
-Status VulkanDevice::createCommandPool(RHICommandPool **commandPoolOut) {
+Status VulkanDevice::createCommandPool(RHICommandPool **poolOut) {
     Status status;
-    VulkanCommandPool *commandPool;
+    VulkanCommandPool *pool;
 
-    commandPool = new(std::nothrow) VulkanCommandPool();
-    if (commandPool == nullptr) {
+    pool = new(std::nothrow) VulkanCommandPool();
+    if (pool == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = commandPool->create(this);
+    status = pool->create(this);
     if (status != Status::success) {
-        delete commandPool;
+        delete pool;
         return status;
     }
 
-    *commandPoolOut = commandPool;
+    *poolOut = pool;
+    return Status::success;
+}
+
+Status VulkanDevice::createRenderingAgent(RHIRenderingAgent **agentOut) {
+    Status status;
+    VulkanRenderingAgent *agent;
+
+    agent = new(std::nothrow) VulkanRenderingAgent();
+    if (agent == nullptr) {
+        return Status::hostAllocationFailed;
+    }
+
+    status = agent->create(this);
+    if (status != Status::success) {
+        delete agent;
+        return status;
+    }
+
+    *agentOut = agent;
     return Status::success;
 }
 

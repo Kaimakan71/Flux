@@ -20,11 +20,8 @@ private:
     VkPhysicalDevice physicalDevice;
     uint32_t swapchainImageCount;
     VkSurfaceFormatKHR *swapchainImageFormat;
-    VkExtent2D swapchainImageExtent;
     VkPresentModeKHR swapchainPresentMode;
-    VkSwapchainKHR swapchain;
     VkImageView *swapchainImageViews;
-    VkFramebuffer *swapchainFramebuffers;
 
     VkResult selectPhysicalDevice(void);
 
@@ -50,6 +47,9 @@ public:
     VkDevice device;
     VulkanDeviceDispatch dispatch;
     VkRenderPass renderPass;
+    VkExtent2D swapchainImageExtent;
+    VkSwapchainKHR swapchain;
+    VkFramebuffer *swapchainFramebuffers;
 
     static const char *getPhysicalDeviceTypeString(VkPhysicalDeviceType type);
 
@@ -61,7 +61,9 @@ public:
 
     virtual Status createPipeline(const RHIPipelineDescription *description, RHIPipeline **pipeline);
 
-    virtual Status createCommandPool(RHICommandPool **commandPool);
+    virtual Status createCommandPool(RHICommandPool **pool);
+
+    virtual Status createRenderingAgent(RHIRenderingAgent **agent);
 
     virtual void destroy(void);
 

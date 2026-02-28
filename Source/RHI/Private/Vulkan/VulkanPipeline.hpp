@@ -17,7 +17,6 @@ private:
     VulkanDevice *device;
 
     VkPipelineLayout layout;
-    VkPipeline pipeline;
 
     void destroyShaderStageCreateInfos(uint32_t stageCount, VkPipelineShaderStageCreateInfo *infos);
 
@@ -30,6 +29,8 @@ private:
     VkResult createPipeline(const RHIPipelineDescription *description);
 
 public:
+
+    VkPipeline pipeline;
 
     static VkPrimitiveTopology translatePrimitiveTopology(RHIPrimitiveTopology topology);
 
