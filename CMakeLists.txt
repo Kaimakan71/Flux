@@ -48,8 +48,6 @@ set(RHI_VULKAN_SOURCES
     VulkanDispatch.hpp
     VulkanLoader.hpp
     VulkanLoader.cpp
-    VulkanHelpers.hpp
-    VulkanHelpers.cpp
     VulkanPipeline.hpp
     VulkanPipeline.cpp
     VulkanCommandPool.hpp

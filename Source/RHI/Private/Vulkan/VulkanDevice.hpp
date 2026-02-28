@@ -14,50 +14,52 @@ namespace Flux {
 class VulkanDevice: public RHIDevice {
 private:
 
-    VulkanRHI *rhi;
-
-    VkSurfaceKHR surface;
-    VkPhysicalDevice physicalDevice;
-    uint32_t swapchainImageCount;
-    VkSurfaceFormatKHR *swapchainImageFormat;
-    VkPresentModeKHR swapchainPresentMode;
-    VkImageView *swapchainImageViews;
-
     VkResult selectPhysicalDevice(void);
 
-    void selectSwapchainParameters(Window window);
+    void selectSwapchainParameters(void);
 
     VkResult getSwapchainImages(uint32_t *imageCount, VkImage **images);
 
-    VkResult createSurface(Window window);
+    VkResult createSurface(void);
 
     VkResult createDevice(void);
 
-    VkResult createSwapchain(Window window);
+    VkResult createSwapchain(void);
 
     VkResult createRenderPass(void);
 
     VkResult createSwapchainFramebuffers(void);
 
-    VkResult createAll(Window window);
+    VkResult createAll(void);
 
 public:
 
-    VulkanDeviceInfo deviceInfo;
+    VulkanRHI &rhi;
+    Window &window;
+
+    VkSurfaceKHR surface;
+    VulkanDeviceInfo info;
+    VkPhysicalDevice physicalDevice;
     VkDevice device;
     VulkanDeviceDispatch dispatch;
-    VkRenderPass renderPass;
+    uint32_t swapchainImageCount;
+    VkSurfaceFormatKHR *swapchainImageFormat;
     VkExtent2D swapchainImageExtent;
+    VkPresentModeKHR swapchainPresentMode;
     VkSwapchainKHR swapchain;
+    VkRenderPass renderPass;
+    VkImageView *swapchainImageViews;
     VkFramebuffer *swapchainFramebuffers;
 
     static const char *getPhysicalDeviceTypeString(VkPhysicalDeviceType type);
 
     static const char *getPresentModeString(VkPresentModeKHR mode);
 
+    VulkanDevice(VulkanRHI &rhi, Window &window);
+
     VkBool32 deviceIsCompatible(VkPhysicalDevice device, VulkanDeviceInfo *info);
 
-    Status create(VulkanRHI *rhi, Window window);
+    Status create(void);
 
     virtual Status createPipeline(const RHIPipelineDescription *description, RHIPipeline **pipeline);
 

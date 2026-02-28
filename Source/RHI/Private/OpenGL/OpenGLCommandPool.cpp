@@ -10,11 +10,15 @@
 
 namespace Flux {
 
+OpenGLCommandPool::OpenGLCommandPool(OpenGLDevice &device): device(device) {
+
+}
+
 void OpenGLCommandPool::destroy(void) {
 
 }
 
-Status OpenGLCommandPool::create(OpenGLDevice *device) {
+Status OpenGLCommandPool::create(void) {
     FLUX_LOG_ERROR("OpenGL command pool not implemented");
     return Status::notImplemented;
 }

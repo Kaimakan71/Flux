@@ -10,9 +10,13 @@
 
 namespace Flux {
 
+VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandPool &pool): pool(pool) {
+
+}
+
 void VulkanCommandBuffer::free(void) {
     FLUX_LOG_DEBUG("Freeing command buffer...");
-    this->pool->device->dispatch.vkFreeCommandBuffers(this->pool->device->device, this->pool->pool, 1, &this->buffer);
+    this->pool.device.dispatch.vkFreeCommandBuffers(this->pool.device.device, this->pool.pool, 1, &this->buffer);
 }
 
 }

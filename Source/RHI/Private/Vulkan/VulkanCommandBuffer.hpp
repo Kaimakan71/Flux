@@ -14,9 +14,11 @@ namespace Flux {
 class VulkanCommandBuffer: public RHICommandBuffer {
 public:
 
-    VulkanCommandPool *pool;
+    VulkanCommandPool &pool;
 
     VkCommandBuffer buffer;
+
+    VulkanCommandBuffer(VulkanCommandPool &pool);
 
     virtual void free(void);
 

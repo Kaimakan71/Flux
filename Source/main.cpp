@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
     }
 
     FLUX_LOG_INFO("Presenting window...");
-    renderingAgent->present(window, commandBuffer, pipeline);
+    renderingAgent->present(*commandBuffer, *pipeline);
 
     cleanup();
     return 0;

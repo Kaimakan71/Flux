@@ -73,12 +73,4 @@ Status Window::create(const char *title, int width, int height, RenderingAPI ren
     return Status::success;
 }
 
-void Window::present(void) {
-    glfwShowWindow(this->handle);
-    while (!glfwWindowShouldClose(this->handle)) {
-        glfwPollEvents();
-    }
-    glfwHideWindow(this->handle);
-}
-
 }

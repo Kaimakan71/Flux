@@ -14,20 +14,17 @@
 
 namespace Flux {
 
+OpenGLDevice::OpenGLDevice(Window &window) {
+    this->context = window.handle;
+}
+
 void OpenGLDevice::destroy(void) {
 
 }
 
-void OpenGLDevice::bind(void) {
-    if (glfwGetCurrentContext() != this->context) {
-        glfwMakeContextCurrent(this->context);
-    }
-}
-
-Status OpenGLDevice::create(OpenGLRHI *rhi, Window window) {
+Status OpenGLDevice::create(void) {
     Status status;
 
-    this->context = window.handle;
     this->bind();
 
     status = OpenGLLoader::loadSymbols(&this->dispatch, glfwGetProcAddress);
@@ -46,12 +43,12 @@ Status OpenGLDevice::createPipeline(const RHIPipelineDescription *description, R
     Status status;
     OpenGLPipeline *pipeline;
 
-    pipeline = new(std::nothrow) OpenGLPipeline();
+    pipeline = new(std::nothrow) OpenGLPipeline(*this);
     if (pipeline == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = pipeline->create(this, description);
+    status = pipeline->create(description);
     if (status != Status::success) {
         delete pipeline;
         return status;
@@ -65,12 +62,12 @@ Status OpenGLDevice::createCommandPool(RHICommandPool **poolOut) {
     Status status;
     OpenGLCommandPool *pool;
 
-    pool = new(std::nothrow) OpenGLCommandPool();
+    pool = new(std::nothrow) OpenGLCommandPool(*this);
     if (pool == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = pool->create(this);
+    status = pool->create();
     if (status != Status::success) {
         delete pool;
         return status;
@@ -84,12 +81,12 @@ Status OpenGLDevice::createRenderingAgent(RHIRenderingAgent **agentOut) {
     Status status;
     OpenGLRenderingAgent *agent;
 
-    agent = new(std::nothrow) OpenGLRenderingAgent();
+    agent = new(std::nothrow) OpenGLRenderingAgent(*this);
     if (agent == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = agent->create(this);
+    status = agent->create();
     if (status != Status::success) {
         delete agent;
         return status;

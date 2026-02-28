@@ -52,6 +52,12 @@ public:
     VkInstance instance;
     VulkanInstanceDispatch dispatch;
 
+    static VkResult getInstanceVersion(uint32_t *version);
+
+    static VkResult getInstanceLayerProperties(uint32_t *propertyCount, VkLayerProperties **properties);
+
+    static VkResult filterInstanceLayerNames(uint32_t requestedNameCount, const char **requestedNames, uint32_t *availableNameCount, const char ***availableNames);
+
     VkResult getPhysicalDevices(uint32_t *deviceCount, VkPhysicalDevice **devices);
 
     VkBool32 deviceSupportsExtensions(VkPhysicalDevice device, const char *layerName, uint32_t requestedNameCount, const char **requestedNames);
@@ -70,7 +76,7 @@ public:
 
     virtual Status initialize(void);
 
-    virtual Status createDevice(Window window, RHIDevice **device);
+    virtual Status createDevice(Window &window, RHIDevice **device);
 
     virtual void shutdown(void);
 

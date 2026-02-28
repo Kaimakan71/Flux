@@ -14,7 +14,11 @@ namespace Flux {
 class OpenGLPipeline: public RHIPipeline {
 public:
 
-    Status create(OpenGLDevice *device, const RHIPipelineDescription *description);
+    OpenGLDevice &device;
+
+    OpenGLPipeline(OpenGLDevice &device);
+
+    Status create(const RHIPipelineDescription *description);
 
     virtual void destroy(void);
 

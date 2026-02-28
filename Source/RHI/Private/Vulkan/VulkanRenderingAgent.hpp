@@ -14,21 +14,23 @@ namespace Flux {
 class VulkanRenderingAgent: public RHIRenderingAgent {
 private:
 
-    VulkanDevice *device;
-
-    VkSemaphore imageAvailable;
-    VkFence inFlight;
-    VkSemaphore renderComplete;
-
     VkResult createSyncObjects(void);
 
     void drawFrame(VkCommandBuffer commandBuffer, VkPipeline pipeline);
 
 public:
 
-    Status create(VulkanDevice *device);
+    VulkanDevice &device;
 
-    virtual void present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline);
+    VkSemaphore imageAvailable;
+    VkFence inFlight;
+    VkSemaphore renderComplete;
+
+    VulkanRenderingAgent(VulkanDevice &device);
+
+    Status create(void);
+
+    virtual void present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline);
 
     virtual void destroy(void);
 

@@ -14,7 +14,11 @@ namespace Flux {
 class OpenGLCommandPool: public RHICommandPool {
 public:
 
-    Status create(OpenGLDevice *device);
+    OpenGLDevice &device;
+
+    OpenGLCommandPool(OpenGLDevice &device);
+
+    Status create(void);
 
     virtual Status allocateCommandBuffers(uint32_t bufferCount, RHICommandBuffer **buffers);
 

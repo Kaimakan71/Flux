@@ -8,13 +8,14 @@ The `Core` subsystem is responsible for handling logging and managing windows. T
 The `RHI` subsystem is responsible for interfacing with the graphics hardware and providing a higher-level API that requires minimal application code to handle differences between low-level rendering APIs.
 
 ### RHI Implementation Status
-| Feature            | OpenGL | Vulkan |
-|--------------------|--------|--------|
-| `RHI`              | ✅     | ✅     |
-| `RHIDevice`        | ✅     | ✅     |
-| `RHIPipeline`      | ❌     | ✅     |
-| `RHICommandPool`   | ❌     | ✅     |
-| `RHICommandBuffer` | ❌     | ☑️     |
+| Feature             | OpenGL | Vulkan |
+|---------------------|--------|--------|
+| `RHI`               | ✅     | ✅     |
+| `RHIDevice`         | ✅     | ✅     |
+| `RHIPipeline`       | ❌     | ✅     |
+| `RHICommandPool`    | ❌     | ✅     |
+| `RHICommandBuffer`  | ❌     | ☑️     |
+| `RHIRenderingAgent` | ❌     | ☑️     |
 * ❌: not implemented.
 * ☑️: partially implemented.
 * ✅: fully implemented (features may still be added in future versions).

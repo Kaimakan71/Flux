@@ -14,10 +14,6 @@ namespace Flux {
 class VulkanPipeline: public RHIPipeline {
 private:
 
-    VulkanDevice *device;
-
-    VkPipelineLayout layout;
-
     void destroyShaderStageCreateInfos(uint32_t stageCount, VkPipelineShaderStageCreateInfo *infos);
 
     VkResult translateShaderStageDescriptions(uint32_t stageCount, const RHIShaderStageDescription *descriptions, VkPipelineShaderStageCreateInfo **createInfos);
@@ -30,6 +26,9 @@ private:
 
 public:
 
+    VulkanDevice &device;
+
+    VkPipelineLayout layout;
     VkPipeline pipeline;
 
     static VkPrimitiveTopology translatePrimitiveTopology(RHIPrimitiveTopology topology);
@@ -40,7 +39,9 @@ public:
 
     static VkFormat translateComponentFormat(RHIComponentType componentType, uint32_t componentCount);
 
-    Status create(VulkanDevice *device, const RHIPipelineDescription *description);
+    VulkanPipeline(VulkanDevice &device);
+
+    Status create(const RHIPipelineDescription *description);
 
     virtual void destroy(void);
 

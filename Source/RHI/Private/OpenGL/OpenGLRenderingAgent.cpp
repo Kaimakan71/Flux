@@ -10,16 +10,20 @@
 
 namespace Flux {
 
+OpenGLRenderingAgent::OpenGLRenderingAgent(OpenGLDevice &device): device(device) {
+
+}
+
 void OpenGLRenderingAgent::destroy(void) {
 
 }
 
-Status OpenGLRenderingAgent::create(OpenGLDevice *device) {
+Status OpenGLRenderingAgent::create(void) {
     FLUX_LOG_ERROR("OpenGL rendering agent creation not implemented");
     return Status::notImplemented;
 }
 
-void OpenGLRenderingAgent::present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) {
+void OpenGLRenderingAgent::present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline) {
 
 }
 

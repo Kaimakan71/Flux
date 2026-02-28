@@ -95,7 +95,7 @@ VkFormat VulkanPipeline::translateComponentFormat(RHIComponentType componentType
 
 void VulkanPipeline::destroyShaderStageCreateInfos(uint32_t stageCount, VkPipelineShaderStageCreateInfo *infos) {
     for (uint32_t i = 0; i < stageCount; i++) {
-        this->device->dispatch.vkDestroyShaderModule(this->device->device, infos[i].module, nullptr);
+        this->device.dispatch.vkDestroyShaderModule(this->device.device, infos[i].module, nullptr);
     }
 
     delete[] infos;
@@ -138,7 +138,7 @@ VkResult VulkanPipeline::translateShaderStageDescriptions(uint32_t stageCount, c
         /* Create shader module */
         moduleCreateInfo.codeSize = description->codeSize;
         moduleCreateInfo.pCode = (const uint32_t *) description->code;
-        result = this->device->dispatch.vkCreateShaderModule(this->device->device, &moduleCreateInfo, nullptr, &createInfo->module);
+        result = this->device.dispatch.vkCreateShaderModule(this->device.device, &moduleCreateInfo, nullptr, &createInfo->module);
         if (result != VK_SUCCESS) {
             FLUX_LOG_VULKAN_ERROR(result, "Failed to create shader module");
             this->destroyShaderStageCreateInfos(s, createInfos);
@@ -223,16 +223,21 @@ VkResult VulkanPipeline::translateVertexInputBindingDescriptions(uint32_t bindin
     return VK_SUCCESS;
 }
 
+VulkanPipeline::VulkanPipeline(VulkanDevice &device): device(device) {
+    this->layout = VK_NULL_HANDLE;
+    this->pipeline = VK_NULL_HANDLE;
+}
+
 void VulkanPipeline::destroy(void) {
     if (this->pipeline != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying graphics pipeline...");
-        this->device->dispatch.vkDestroyPipeline(this->device->device, this->pipeline, nullptr);
+        this->device.dispatch.vkDestroyPipeline(this->device.device, this->pipeline, nullptr);
         this->pipeline = VK_NULL_HANDLE;
     }
 
     if (this->layout != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying pipeline layout...");
-        this->device->dispatch.vkDestroyPipelineLayout(this->device->device, this->layout, nullptr);
+        this->device.dispatch.vkDestroyPipelineLayout(this->device.device, this->layout, nullptr);
         this->layout = VK_NULL_HANDLE;
     }
 }
@@ -251,7 +256,7 @@ VkResult VulkanPipeline::createLayout(void) {
     };
 
     FLUX_LOG_DEBUG("Creating pipeline layout...");
-    result = this->device->dispatch.vkCreatePipelineLayout(this->device->device, &createInfo, nullptr, &this->layout);
+    result = this->device.dispatch.vkCreatePipelineLayout(this->device.device, &createInfo, nullptr, &this->layout);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create pipeline layout");
         return result;
@@ -371,7 +376,7 @@ VkResult VulkanPipeline::createPipeline(const RHIPipelineDescription *descriptio
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicStateCreateInfo,
         .layout = this->layout,
-        .renderPass = this->device->renderPass,
+        .renderPass = this->device.renderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
@@ -405,7 +410,7 @@ VkResult VulkanPipeline::createPipeline(const RHIPipelineDescription *descriptio
     }
 
     FLUX_LOG_DEBUG("Creating graphics pipeline...");
-    result = this->device->dispatch.vkCreateGraphicsPipelines(this->device->device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &this->pipeline);
+    result = this->device.dispatch.vkCreateGraphicsPipelines(this->device.device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &this->pipeline);
 
     /* Always do cleanup */
     delete[] vertexInputStateCreateInfo.pVertexAttributeDescriptions;
@@ -421,14 +426,8 @@ VkResult VulkanPipeline::createPipeline(const RHIPipelineDescription *descriptio
     return VK_SUCCESS;
 }
 
-Status VulkanPipeline::create(VulkanDevice *device, const RHIPipelineDescription *description) {
+Status VulkanPipeline::create(const RHIPipelineDescription *description) {
     VkResult result;
-
-    this->device = device;
-
-    /* In case destroy() is needed before we finish */
-    this->layout = VK_NULL_HANDLE;
-    this->pipeline = VK_NULL_HANDLE;
 
     result = this->createLayout();
     if (result != VK_SUCCESS) {

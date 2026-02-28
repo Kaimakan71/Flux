@@ -12,15 +12,19 @@
 
 namespace Flux {
 
+VulkanCommandPool::VulkanCommandPool(VulkanDevice &device): device(device) {
+    this->pool = VK_NULL_HANDLE;
+}
+
 void VulkanCommandPool::destroy(void) {
     if (this->pool != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying command pool...");
-        this->device->dispatch.vkDestroyCommandPool(this->device->device, this->pool, nullptr);
+        this->device.dispatch.vkDestroyCommandPool(this->device.device, this->pool, nullptr);
         this->pool = VK_NULL_HANDLE;
     }
 }
 
-Status VulkanCommandPool::create(VulkanDevice *device) {
+Status VulkanCommandPool::create(void) {
     VkResult result;
 
     static VkCommandPoolCreateInfo createInfo = {
@@ -30,11 +34,10 @@ Status VulkanCommandPool::create(VulkanDevice *device) {
         .queueFamilyIndex = UINT32_MAX,
     };
 
-    this->device = device;
-    createInfo.queueFamilyIndex = this->device->deviceInfo.queueFamilies.graphicsIndex;
+    createInfo.queueFamilyIndex = this->device.info.queueFamilies.graphicsIndex;
 
     FLUX_LOG_DEBUG("Creating command pool...");
-    result = this->device->dispatch.vkCreateCommandPool(this->device->device, &createInfo, nullptr, &this->pool);
+    result = this->device.dispatch.vkCreateCommandPool(this->device.device, &createInfo, nullptr, &this->pool);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create command pool");
         return VulkanResult::getStatus(result);
@@ -66,14 +69,14 @@ Status VulkanCommandPool::allocateCommandBuffers(uint32_t bufferCount, RHIComman
         return Status::hostAllocationFailed;
     }
 
-    buffers = new(std::nothrow) VulkanCommandBuffer[bufferCount];
+    buffers = &(new(std::nothrow) VulkanCommandBuffer(*this))[bufferCount];
     if (buffers == nullptr) {
         delete[] vkBuffers;
         return Status::hostAllocationFailed;
     }
 
     FLUX_LOG_DEBUG("Allocating command buffers...");
-    result = this->device->dispatch.vkAllocateCommandBuffers(this->device->device, &allocateInfo, vkBuffers);
+    result = this->device.dispatch.vkAllocateCommandBuffers(this->device.device, &allocateInfo, vkBuffers);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to allocate %u command buffer(s)", bufferCount);
         delete[] buffers;
@@ -82,7 +85,6 @@ Status VulkanCommandPool::allocateCommandBuffers(uint32_t bufferCount, RHIComman
     }
 
     for (uint32_t b = 0; b < bufferCount; b++) {
-        buffers[b].pool = this;
         buffers[b].buffer = vkBuffers[b];
     }
 
@@ -108,7 +110,7 @@ void VulkanCommandPool::freeCommandBuffers(uint32_t bufferCount, RHICommandBuffe
     }
 
     FLUX_LOG_DEBUG("Freeing command buffers...");
-    this->device->dispatch.vkFreeCommandBuffers(this->device->device, this->pool, bufferCount, vkBuffers);
+    this->device.dispatch.vkFreeCommandBuffers(this->device.device, this->pool, bufferCount, vkBuffers);
 
     delete[] vkBuffers;
 }

@@ -19,16 +19,16 @@ Status OpenGLRHI::initialize(void) {
     return Status::success;
 }
 
-Status OpenGLRHI::createDevice(Window window, RHIDevice **deviceOut) {
+Status OpenGLRHI::createDevice(Window &window, RHIDevice **deviceOut) {
     OpenGLDevice *device;
     Status status;
 
-    device = new(std::nothrow) OpenGLDevice();
+    device = new(std::nothrow) OpenGLDevice(window);
     if (device == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = device->create(this, window);
+    status = device->create();
     if (status != Status::success) {
         delete device;
         return status;

@@ -16,7 +16,7 @@ public:
 
     virtual Status initialize(void);
 
-    virtual Status createDevice(Window window, RHIDevice **device);
+    virtual Status createDevice(Window &window, RHIDevice **device);
 
     virtual void shutdown(void);
 

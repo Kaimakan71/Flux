@@ -14,9 +14,13 @@ namespace Flux {
 class OpenGLRenderingAgent: public RHIRenderingAgent {
 public:
 
-    Status create(OpenGLDevice *device);
+    OpenGLDevice &device;
 
-    virtual void present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline);
+    OpenGLRenderingAgent(OpenGLDevice &device);
+
+    Status create(void);
+
+    virtual void present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline);
 
     virtual void destroy(void);
 

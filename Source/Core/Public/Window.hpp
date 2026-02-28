@@ -23,8 +23,6 @@ public:
 
     Status create(const char *title, int width, int height, RenderingAPI renderingApi);
 
-    void present(void);
-
     void destroy(void);
 
 };

@@ -12,7 +12,6 @@
 #include <cstring>
 #include "Log.hpp"
 #include "VulkanDevice.hpp"
-#include "VulkanHelpers.hpp"
 #include "VulkanLoader.hpp"
 #include "VulkanLog.hpp"
 #include "VulkanResult.hpp"
@@ -22,6 +21,95 @@
 static bool globalInitialized = false;
 
 namespace Flux {
+
+VkResult VulkanRHI::getInstanceVersion(uint32_t *version) {
+    VkResult result;
+
+    /* vkEnumerateInstanceVersion() was added in Vulkan 1.1 */
+    if (VulkanLoader::globalDispatch.vkEnumerateInstanceVersion == nullptr) {
+        *version = VK_API_VERSION_1_0;
+        return VK_SUCCESS;
+    }
+
+    result = VulkanLoader::globalDispatch.vkEnumerateInstanceVersion(version);
+    if (result != VK_SUCCESS) {
+        return result;
+    }
+
+    return VK_SUCCESS;
+}
+
+VkResult VulkanRHI::getInstanceLayerProperties(uint32_t *propertyCountOut, VkLayerProperties **propertiesOut) {
+    VkResult result;
+    uint32_t propertyCount;
+    VkLayerProperties *properties;
+
+    result = VulkanLoader::globalDispatch.vkEnumerateInstanceLayerProperties(&propertyCount, nullptr);
+    if (result != VK_SUCCESS) {
+        return result;
+    }
+
+    if (propertyCount < 1) {
+        *propertyCountOut = 0;
+        *propertiesOut = nullptr;
+        return VK_SUCCESS;
+    }
+
+    properties = new(std::nothrow) VkLayerProperties[propertyCount];
+    if (properties == nullptr) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    result = VulkanLoader::globalDispatch.vkEnumerateInstanceLayerProperties(&propertyCount, properties);
+    if (result != VK_SUCCESS) {
+        delete[] properties;
+        return result;
+    }
+
+    *propertyCountOut = propertyCount;
+    *propertiesOut = properties;
+    return VK_SUCCESS;
+}
+
+VkResult VulkanRHI::filterInstanceLayerNames(uint32_t requestedNameCount, const char **requestedNames, uint32_t *availableNameCountOut, const char ***availableNamesOut) {
+    VkResult result;
+    uint32_t propertyCount, availableNameCount;
+    VkLayerProperties *properties;
+    const char **availableNames;
+
+    result = getInstanceLayerProperties(&propertyCount, &properties);
+    if (result != VK_SUCCESS) {
+        return result;
+    }
+
+    if (propertyCount < 1)  {
+        *availableNameCountOut = 0;
+        *availableNamesOut = nullptr;
+        return VK_SUCCESS;
+    }
+
+    availableNames = new(std::nothrow) const char*[requestedNameCount];
+    if (availableNames == nullptr) {
+        delete[] properties;
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    /* Find the intersection between available and requested layers */
+    availableNameCount = 0;
+    for (uint32_t r = 0; r < requestedNameCount; r++)  {
+        for (uint32_t p = 0; p < propertyCount; p++) {
+            if (strcmp(properties[p].layerName, requestedNames[r]) == 0) {
+                availableNames[availableNameCount++] = requestedNames[r];
+                break;
+            }
+        }
+    }
+
+    delete[] properties;
+    *availableNameCountOut = availableNameCount;
+    *availableNamesOut = availableNames;
+    return VK_SUCCESS;
+}
 
 void VulkanRHI::shutdown(void) {
     FLUX_LOG_DEBUG("Shutting down Vulkan RHI...");
@@ -64,7 +152,7 @@ VkResult VulkanRHI::createInstance(void) {
         "VK_LAYER_KHRONOS_validation",
     };
 
-    result = VulkanHelpers::getInstanceVersion(&apiVersion);
+    result = getInstanceVersion(&apiVersion);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_WARNING(result, "Failed to get instance version, assuming 1.0");
         apiVersion = VK_API_VERSION_1_0;
@@ -80,7 +168,7 @@ VkResult VulkanRHI::createInstance(void) {
     }
 
     /* Try to enable optional layers */
-    result = VulkanHelpers::filterInstanceLayerNames(ARRAY_SIZE(optionalLayerNames), optionalLayerNames, &availableLayerCount, &availableLayerNames);
+    result = filterInstanceLayerNames(ARRAY_SIZE(optionalLayerNames), optionalLayerNames, &availableLayerCount, &availableLayerNames);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_WARNING(result, "Failed to filter optional instance layer names, requesting none");
         availableLayerCount = 0;
@@ -396,16 +484,16 @@ VkResult VulkanRHI::getDeviceInfo(VkPhysicalDevice device, VkSurfaceKHR surface,
     return VK_SUCCESS;
 }
 
-Status VulkanRHI::createDevice(Window window, RHIDevice **deviceOut) {
+Status VulkanRHI::createDevice(Window &window, RHIDevice **deviceOut) {
     Status status;
     VulkanDevice *device;
 
-    device = new(std::nothrow) VulkanDevice();
+    device = new(std::nothrow) VulkanDevice(*this, window);
     if (device == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = device->create(this, window);
+    status = device->create();
     if (status != Status::success) {
         delete device;
         return status;

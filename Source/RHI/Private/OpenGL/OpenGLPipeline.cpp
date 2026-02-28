@@ -10,11 +10,15 @@
 
 namespace Flux {
 
+OpenGLPipeline::OpenGLPipeline(OpenGLDevice &device): device(device) {
+
+}
+
 void OpenGLPipeline::destroy(void) {
 
 }
 
-Status OpenGLPipeline::create(OpenGLDevice *device, const RHIPipelineDescription *description) {
+Status OpenGLPipeline::create(const RHIPipelineDescription *description) {
     FLUX_LOG_ERROR("OpenGL pipeline not implemented");
     return Status::notImplemented;
 }

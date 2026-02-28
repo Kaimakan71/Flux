@@ -15,14 +15,20 @@ namespace Flux {
 class OpenGLDevice: public RHIDevice {
 private:
 
-    GLFWwindow *context;
-    OpenGLDispatch dispatch;
-
-    void bind(void);
+    void bind(void) {
+        if (glfwGetCurrentContext() != this->context) {
+            glfwMakeContextCurrent(this->context);
+        }
+    }
 
 public:
 
-    Status create(OpenGLRHI *rhi, Window window);
+    GLFWwindow *context;
+    OpenGLDispatch dispatch;
+
+    OpenGLDevice(Window &window);
+
+    Status create(void);
 
     virtual Status createPipeline(const RHIPipelineDescription *description, RHIPipeline **pipeline);
 

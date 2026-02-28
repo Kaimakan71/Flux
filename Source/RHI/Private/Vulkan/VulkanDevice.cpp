@@ -63,24 +63,13 @@ const char *VulkanDevice::getPresentModeString(VkPresentModeKHR mode) {
     }
 }
 
-VkBool32 VulkanDevice::deviceIsCompatible(VkPhysicalDevice device, VulkanDeviceInfo *info) {
-    VkResult result;
-
-    if (!this->rhi->deviceSupportsExtensions(device, nullptr, ARRAY_SIZE(requiredExtensionNames), requiredExtensionNames)) {
-        return VK_FALSE;
-    }
-
-    result = this->rhi->getDeviceInfo(device, this->surface, info);
-    if (result != VK_SUCCESS) {
-        return VK_FALSE;
-    }
-
-    if (info->surface.formatCount < 1 || info->surface.presentModeCount < 1) {
-        FLUX_LOG_DEBUG("Physical device does not support at least one surface format and present mode, skipping");
-        return VK_FALSE;
-    }
-
-    return VK_TRUE;
+VulkanDevice::VulkanDevice(VulkanRHI &rhi, Window &window): rhi(rhi), window(window) {
+    this->surface = VK_NULL_HANDLE;
+    this->info.surface.formats = nullptr;
+    this->info.surface.presentModes = nullptr;
+    this->device = VK_NULL_HANDLE;
+    this->swapchain = VK_NULL_HANDLE;
+    this->renderPass = VK_NULL_HANDLE;
 }
 
 void VulkanDevice::destroy(void) {
@@ -124,23 +113,43 @@ void VulkanDevice::destroy(void) {
         this->device = VK_NULL_HANDLE;
     }
 
-    if (this->deviceInfo.surface.presentModes != nullptr) {
-        delete[] this->deviceInfo.surface.presentModes;
-        this->deviceInfo.surface.presentModes = nullptr;
-        this->deviceInfo.surface.presentModeCount = 0;
+    if (this->info.surface.presentModes != nullptr) {
+        delete[] this->info.surface.presentModes;
+        this->info.surface.presentModes = nullptr;
+        this->info.surface.presentModeCount = 0;
     }
 
-    if (this->deviceInfo.surface.formats != nullptr) {
-        delete[] this->deviceInfo.surface.formats;
-        this->deviceInfo.surface.formats = nullptr;
-        this->deviceInfo.surface.formatCount = 0;
+    if (this->info.surface.formats != nullptr) {
+        delete[] this->info.surface.formats;
+        this->info.surface.formats = nullptr;
+        this->info.surface.formatCount = 0;
     }
 
     if (this->surface != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying window surface...");
-        this->rhi->dispatch.vkDestroySurfaceKHR(this->rhi->instance, this->surface, nullptr);
+        this->rhi.dispatch.vkDestroySurfaceKHR(this->rhi.instance, this->surface, nullptr);
         this->surface = VK_NULL_HANDLE;
     }
+}
+
+VkBool32 VulkanDevice::deviceIsCompatible(VkPhysicalDevice device, VulkanDeviceInfo *info) {
+    VkResult result;
+
+    if (!this->rhi.deviceSupportsExtensions(device, nullptr, ARRAY_SIZE(requiredExtensionNames), requiredExtensionNames)) {
+        return VK_FALSE;
+    }
+
+    result = this->rhi.getDeviceInfo(device, this->surface, info);
+    if (result != VK_SUCCESS) {
+        return VK_FALSE;
+    }
+
+    if (info->surface.formatCount < 1 || info->surface.presentModeCount < 1) {
+        FLUX_LOG_DEBUG("Physical device does not support at least one surface format and present mode, skipping");
+        return VK_FALSE;
+    }
+
+    return VK_TRUE;
 }
 
 VkResult VulkanDevice::selectPhysicalDevice(void) {
@@ -150,7 +159,7 @@ VkResult VulkanDevice::selectPhysicalDevice(void) {
 
     FLUX_LOG_DEBUG("Selecting physical device...");
 
-    result = this->rhi->getPhysicalDevices(&deviceCount, &devices);
+    result = this->rhi.getPhysicalDevices(&deviceCount, &devices);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to get physical device list");
         return result;
@@ -158,7 +167,7 @@ VkResult VulkanDevice::selectPhysicalDevice(void) {
 
     /* TODO: Use a point-based ranking system to get the best device */
     for (uint32_t d = 0; d < deviceCount; d++) {
-        if (this->deviceIsCompatible(devices[d], &this->deviceInfo)) {
+        if (this->deviceIsCompatible(devices[d], &this->info)) {
             this->physicalDevice = devices[d];
             delete[] devices;
             return VK_SUCCESS;
@@ -170,7 +179,7 @@ VkResult VulkanDevice::selectPhysicalDevice(void) {
     return VK_ERROR_FEATURE_NOT_PRESENT;
 }
 
-void VulkanDevice::selectSwapchainParameters(Window window) {
+void VulkanDevice::selectSwapchainParameters(void) {
     uint32_t imageCount;
     VkSurfaceCapabilitiesKHR *capabilities;
     VkSurfaceFormatKHR *formats;
@@ -179,7 +188,7 @@ void VulkanDevice::selectSwapchainParameters(Window window) {
     FLUX_LOG_DEBUG("Selecting swapchain parameters...");
 
     /* Select image count */
-    capabilities = &this->deviceInfo.surface.capabilities;
+    capabilities = &this->info.surface.capabilities;
     imageCount = capabilities->minImageCount + 1;
     if (capabilities->maxImageCount != 0 &&  capabilities->maxImageCount < imageCount) {
         imageCount = capabilities->maxImageCount;
@@ -188,9 +197,9 @@ void VulkanDevice::selectSwapchainParameters(Window window) {
     FLUX_LOG_DEBUG("Image count: %u", this->swapchainImageCount);
 
     /* Select image format */
-    formats = this->deviceInfo.surface.formats;
+    formats = this->info.surface.formats;
     this->swapchainImageFormat = &formats[0];
-    for (uint32_t f = 0; f < this->deviceInfo.surface.formatCount; f++) {
+    for (uint32_t f = 0; f < this->info.surface.formatCount; f++) {
         if (formats[f].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             this->swapchainImageFormat = &formats[f];
             break;
@@ -203,7 +212,7 @@ void VulkanDevice::selectSwapchainParameters(Window window) {
         this->swapchainImageExtent = capabilities->currentExtent;
     } else {
         /* Get size in pixels to adjust for DPI */
-        glfwGetFramebufferSize(window.handle, &width, &height);
+        glfwGetFramebufferSize(this->window.handle, &width, &height);
 
         /* Use best possible valid size */
         this->swapchainImageExtent.width = std::clamp((uint32_t) width, capabilities->minImageExtent.width, capabilities->maxImageExtent.width);
@@ -213,8 +222,8 @@ void VulkanDevice::selectSwapchainParameters(Window window) {
 
     /* Select present mode (mailbox is preferred) */
     this->swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    for (uint32_t m = 0; m < this->deviceInfo.surface.presentModeCount; m++) {
-        if (this->deviceInfo.surface.presentModes[m] == VK_PRESENT_MODE_MAILBOX_KHR) {
+    for (uint32_t m = 0; m < this->info.surface.presentModeCount; m++) {
+        if (this->info.surface.presentModes[m] == VK_PRESENT_MODE_MAILBOX_KHR) {
             this->swapchainPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
         }
     }
@@ -253,11 +262,11 @@ VkResult VulkanDevice::getSwapchainImages(uint32_t *imageCountOut, VkImage **ima
     return VK_SUCCESS;
 }
 
-VkResult VulkanDevice::createSurface(Window window) {
+VkResult VulkanDevice::createSurface(void) {
     VkResult result;
 
     FLUX_LOG_DEBUG("Creating window surface...");
-    result = glfwCreateWindowSurface(this->rhi->instance, window.handle, nullptr, &this->surface);
+    result = glfwCreateWindowSurface(this->rhi.instance, this->window.handle, nullptr, &this->surface);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create window surface");
         return result;
@@ -291,51 +300,51 @@ VkResult VulkanDevice::createDevice(void) {
         return result;
     }
 
-    FLUX_LOG_DEBUG("Type: %s (0x%08x)", getPhysicalDeviceTypeString(this->deviceInfo.properties.deviceType), (uint32_t) this->deviceInfo.properties.deviceType);
-    FLUX_LOG_DEBUG("Vendor ID: 0x%08x", this->deviceInfo.properties.vendorID);
-    FLUX_LOG_DEBUG("Device ID: 0x%08x", this->deviceInfo.properties.deviceID);
-    FLUX_LOG_DEBUG("Name: \"%s\"", this->deviceInfo.properties.deviceName);
-    FLUX_LOG_DEBUG("API version: %u.%u.%u", VK_API_VERSION_MAJOR(this->deviceInfo.properties.apiVersion), VK_API_VERSION_MINOR(this->deviceInfo.properties.apiVersion), VK_API_VERSION_PATCH(this->deviceInfo.properties.apiVersion));
-    FLUX_LOG_DEBUG("Queue family indices: graphics=%u, present=%u", this->deviceInfo.queueFamilies.graphicsIndex, this->deviceInfo.queueFamilies.presentIndex);
+    FLUX_LOG_DEBUG("Type: %s (0x%08x)", getPhysicalDeviceTypeString(this->info.properties.deviceType), (uint32_t) this->info.properties.deviceType);
+    FLUX_LOG_DEBUG("Vendor ID: 0x%08x", this->info.properties.vendorID);
+    FLUX_LOG_DEBUG("Device ID: 0x%08x", this->info.properties.deviceID);
+    FLUX_LOG_DEBUG("Name: \"%s\"", this->info.properties.deviceName);
+    FLUX_LOG_DEBUG("API version: %u.%u.%u", VK_API_VERSION_MAJOR(this->info.properties.apiVersion), VK_API_VERSION_MINOR(this->info.properties.apiVersion), VK_API_VERSION_PATCH(this->info.properties.apiVersion));
+    FLUX_LOG_DEBUG("Queue family indices: graphics=%u, present=%u", this->info.queueFamilies.graphicsIndex, this->info.queueFamilies.presentIndex);
 
     /* Create one queue for each queue family */
     queuePriority = 1.0f;
-    for (uint32_t f = 0; f < this->deviceInfo.queueFamilies.count; f++) {
+    for (uint32_t f = 0; f < this->info.queueFamilies.count; f++) {
         queueInfo = &queueInfos[f];
         queueInfo->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueInfo->pNext = nullptr;
         queueInfo->flags = 0;
-        queueInfo->queueFamilyIndex = this->deviceInfo.queueFamilies.indices[f];
+        queueInfo->queueFamilyIndex = this->info.queueFamilies.indices[f];
         queueInfo->queueCount = 1;
         queueInfo->pQueuePriorities = &queuePriority;
     }
 
     memset(&features, 0, sizeof(features));
-    createInfo.queueCreateInfoCount = this->deviceInfo.queueFamilies.count;
+    createInfo.queueCreateInfoCount = this->info.queueFamilies.count;
     createInfo.pQueueCreateInfos = queueInfos;
     createInfo.pEnabledFeatures = &features;
 
     FLUX_LOG_DEBUG("Creating logical device...");
-    result = this->rhi->dispatch.vkCreateDevice(physicalDevice, &createInfo, nullptr, &this->device);
+    result = this->rhi.dispatch.vkCreateDevice(physicalDevice, &createInfo, nullptr, &this->device);
     if (result != VK_SUCCESS)  {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create logical device");
         return result;
     }
 
-    VulkanLoader::loadDeviceSymbols(&this->rhi->dispatch, this->device, &this->dispatch);
+    VulkanLoader::loadDeviceSymbols(&this->rhi.dispatch, this->device, &this->dispatch);
 
     /* Get queue handles */
-    this->dispatch.vkGetDeviceQueue(this->device, this->deviceInfo.queueFamilies.graphicsIndex, 0, &this->deviceInfo.graphicsQueue);
-    if (this->deviceInfo.queueFamilies.graphicsIndex == this->deviceInfo.queueFamilies.presentIndex) {
-        this->deviceInfo.presentQueue = this->deviceInfo.graphicsQueue;
+    this->dispatch.vkGetDeviceQueue(this->device, this->info.queueFamilies.graphicsIndex, 0, &this->info.graphicsQueue);
+    if (this->info.queueFamilies.graphicsIndex == this->info.queueFamilies.presentIndex) {
+        this->info.presentQueue = this->info.graphicsQueue;
     } else {
-        this->dispatch.vkGetDeviceQueue(this->device, this->deviceInfo.queueFamilies.presentIndex, 0, &this->deviceInfo.presentQueue);
+        this->dispatch.vkGetDeviceQueue(this->device, this->info.queueFamilies.presentIndex, 0, &this->info.presentQueue);
     }
 
     return VK_SUCCESS;
 }
 
-VkResult VulkanDevice::createSwapchain(Window window) {
+VkResult VulkanDevice::createSwapchain(void) {
     VkResult result;
 
     static VkSwapchainCreateInfoKHR swapchainCreateInfo = {
@@ -362,21 +371,21 @@ VkResult VulkanDevice::createSwapchain(Window window) {
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
-    this->selectSwapchainParameters(window);
+    this->selectSwapchainParameters();
     swapchainCreateInfo.surface = this->surface;
     swapchainCreateInfo.minImageCount = this->swapchainImageCount;
     swapchainCreateInfo.imageFormat = this->swapchainImageFormat->format;
     swapchainCreateInfo.imageColorSpace = this->swapchainImageFormat->colorSpace;
     swapchainCreateInfo.imageExtent = this->swapchainImageExtent;
-    swapchainCreateInfo.preTransform = this->deviceInfo.surface.capabilities.currentTransform;
+    swapchainCreateInfo.preTransform = this->info.surface.capabilities.currentTransform;
     swapchainCreateInfo.presentMode = this->swapchainPresentMode;
 
     /* Share queue families if needed */
-    if (this->deviceInfo.queueFamilies.count > 1) {
+    if (this->info.queueFamilies.count > 1) {
         FLUX_LOG_DEBUG("Image sharing mode: concurrent");
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapchainCreateInfo.queueFamilyIndexCount = this->deviceInfo.queueFamilies.count;
-        swapchainCreateInfo.pQueueFamilyIndices = this->deviceInfo.queueFamilies.indices;
+        swapchainCreateInfo.queueFamilyIndexCount = this->info.queueFamilies.count;
+        swapchainCreateInfo.pQueueFamilyIndices = this->info.queueFamilies.indices;
     } else {
         FLUX_LOG_DEBUG("Image sharing mode: exclusive");
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -570,10 +579,10 @@ VkResult VulkanDevice::createSwapchainFramebuffers(void) {
     return VK_SUCCESS;
 }
 
-VkResult VulkanDevice::createAll(Window window) {
+VkResult VulkanDevice::createAll(void) {
     VkResult result;
 
-    result = this->createSurface(window);
+    result = this->createSurface();
     if (result != VK_SUCCESS) {
         return result;
     }
@@ -583,7 +592,7 @@ VkResult VulkanDevice::createAll(Window window) {
         return result;
     }
 
-    result = this->createSwapchain(window);
+    result = this->createSwapchain();
     if (result != VK_SUCCESS) {
         return result;
     }
@@ -601,19 +610,10 @@ VkResult VulkanDevice::createAll(Window window) {
     return VK_SUCCESS;
 }
 
-Status VulkanDevice::create(VulkanRHI *rhi, Window window) {
+Status VulkanDevice::create(void) {
     VkResult result;
 
-    /* In case destroy() is needed before we finish */
-    this->surface = VK_NULL_HANDLE;
-    this->deviceInfo.surface.formats = nullptr;
-    this->deviceInfo.surface.presentModes = nullptr;
-    this->device = VK_NULL_HANDLE;
-    this->swapchain = VK_NULL_HANDLE;
-    this->renderPass = VK_NULL_HANDLE;
-
-    this->rhi = rhi;
-    result = this->createAll(window);
+    result = this->createAll();
     if (result != VK_SUCCESS) {
         this->destroy();
         return VulkanResult::getStatus(result);
@@ -626,12 +626,12 @@ Status VulkanDevice::createPipeline(const RHIPipelineDescription *description, R
     Status status;
     VulkanPipeline *pipeline;
 
-    pipeline = new(std::nothrow) VulkanPipeline();
+    pipeline = new(std::nothrow) VulkanPipeline(*this);
     if (pipeline == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = pipeline->create(this, description);
+    status = pipeline->create(description);
     if (status != Status::success) {
         delete pipeline;
         return status;
@@ -645,12 +645,12 @@ Status VulkanDevice::createCommandPool(RHICommandPool **poolOut) {
     Status status;
     VulkanCommandPool *pool;
 
-    pool = new(std::nothrow) VulkanCommandPool();
+    pool = new(std::nothrow) VulkanCommandPool(*this);
     if (pool == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = pool->create(this);
+    status = pool->create();
     if (status != Status::success) {
         delete pool;
         return status;
@@ -664,12 +664,12 @@ Status VulkanDevice::createRenderingAgent(RHIRenderingAgent **agentOut) {
     Status status;
     VulkanRenderingAgent *agent;
 
-    agent = new(std::nothrow) VulkanRenderingAgent();
+    agent = new(std::nothrow) VulkanRenderingAgent(*this);
     if (agent == nullptr) {
         return Status::hostAllocationFailed;
     }
 
-    status = agent->create(this);
+    status = agent->create();
     if (status != Status::success) {
         delete agent;
         return status;

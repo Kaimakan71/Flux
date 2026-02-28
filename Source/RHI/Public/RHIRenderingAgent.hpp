@@ -14,7 +14,7 @@ namespace Flux {
 class RHIRenderingAgent {
 public:
 
-    virtual void present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) = 0;
+    virtual void present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline) = 0;
 
     virtual void destroy(void) = 0;
 

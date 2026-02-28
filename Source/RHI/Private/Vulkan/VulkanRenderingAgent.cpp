@@ -14,22 +14,28 @@
 
 namespace Flux {
 
+VulkanRenderingAgent::VulkanRenderingAgent(VulkanDevice &device): device(device) {
+    this->imageAvailable = VK_NULL_HANDLE;
+    this->inFlight = VK_NULL_HANDLE;
+    this->renderComplete = VK_NULL_HANDLE;
+}
+
 void VulkanRenderingAgent::destroy(void) {
     if (this->renderComplete != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying render complete semaphore...");
-        this->device->dispatch.vkDestroySemaphore(this->device->device, this->renderComplete, nullptr);
+        this->device.dispatch.vkDestroySemaphore(this->device.device, this->renderComplete, nullptr);
         this->renderComplete = VK_NULL_HANDLE;
     }
 
     if (this->inFlight != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying in-flight fence...");
-        this->device->dispatch.vkDestroyFence(this->device->device, this->inFlight, nullptr);
+        this->device.dispatch.vkDestroyFence(this->device.device, this->inFlight, nullptr);
         this->inFlight = VK_NULL_HANDLE;
     }
 
     if (this->imageAvailable != VK_NULL_HANDLE) {
         FLUX_LOG_DEBUG("Destroying image available semaphore...");
-        this->device->dispatch.vkDestroySemaphore(this->device->device, this->imageAvailable, nullptr);
+        this->device.dispatch.vkDestroySemaphore(this->device.device, this->imageAvailable, nullptr);
         this->imageAvailable = VK_NULL_HANDLE;
     }
 }
@@ -51,19 +57,19 @@ VkResult VulkanRenderingAgent::createSyncObjects(void) {
 
     FLUX_LOG_DEBUG("Creating synchronization objects...");
 
-    result = this->device->dispatch.vkCreateSemaphore(this->device->device, &semaphoreCreateInfo, nullptr, &this->imageAvailable);
+    result = this->device.dispatch.vkCreateSemaphore(this->device.device, &semaphoreCreateInfo, nullptr, &this->imageAvailable);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create image available semaphore");
         return result;
     }
 
-    result = this->device->dispatch.vkCreateFence(this->device->device, &fenceCreateInfo, nullptr, &this->inFlight);
+    result = this->device.dispatch.vkCreateFence(this->device.device, &fenceCreateInfo, nullptr, &this->inFlight);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create in-flight fence");
         return result;
     }
 
-    result = this->device->dispatch.vkCreateSemaphore(this->device->device, &semaphoreCreateInfo, nullptr, &this->renderComplete);
+    result = this->device.dispatch.vkCreateSemaphore(this->device.device, &semaphoreCreateInfo, nullptr, &this->renderComplete);
     if (result != VK_SUCCESS) {
         FLUX_LOG_VULKAN_ERROR(result, "Failed to create render complete semaphore");
         return result;
@@ -72,15 +78,8 @@ VkResult VulkanRenderingAgent::createSyncObjects(void) {
     return VK_SUCCESS;
 }
 
-Status VulkanRenderingAgent::create(VulkanDevice *device) {
+Status VulkanRenderingAgent::create(void) {
     VkResult result;
-
-    this->device = device;
-
-    /* In case destroy() is needed before we finish */
-    this->imageAvailable = VK_NULL_HANDLE;
-    this->inFlight = VK_NULL_HANDLE;
-    this->renderComplete = VK_NULL_HANDLE;
 
     result = this->createSyncObjects();
     if (result != VK_SUCCESS) {
@@ -129,8 +128,8 @@ void VulkanRenderingAgent::drawFrame(VkCommandBuffer commandBuffer, VkPipeline p
     static const VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = (float) this->device->swapchainImageExtent.width,
-        .height = (float) this->device->swapchainImageExtent.height,
+        .width = (float) this->device.swapchainImageExtent.width,
+        .height = (float) this->device.swapchainImageExtent.height,
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -140,7 +139,7 @@ void VulkanRenderingAgent::drawFrame(VkCommandBuffer commandBuffer, VkPipeline p
             .x = 0,
             .y = 0,
         },
-        .extent = this->device->swapchainImageExtent,
+        .extent = this->device.swapchainImageExtent,
     };
 
     static const VkPipelineStageFlags waitStages[] = { 
@@ -165,55 +164,55 @@ void VulkanRenderingAgent::drawFrame(VkCommandBuffer commandBuffer, VkPipeline p
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = &this->renderComplete,
         .swapchainCount = 1,
-        .pSwapchains = &this->device->swapchain,
+        .pSwapchains = &this->device.swapchain,
         .pImageIndices = &imageIndex,
         .pResults = nullptr,
     };
 
     /* Wait for in-flight frame to finish rendering */
-    this->device->dispatch.vkWaitForFences(this->device->device, 1, &this->inFlight, VK_TRUE, UINT64_MAX);
-    this->device->dispatch.vkResetFences(this->device->device, 1, &this->inFlight);
+    this->device.dispatch.vkWaitForFences(this->device.device, 1, &this->inFlight, VK_TRUE, UINT64_MAX);
+    this->device.dispatch.vkResetFences(this->device.device, 1, &this->inFlight);
 
     /* Acquire an image to render to */
-    this->device->dispatch.vkAcquireNextImageKHR(this->device->device, this->device->swapchain, UINT64_MAX, this->imageAvailable, VK_NULL_HANDLE, &imageIndex);
+    this->device.dispatch.vkAcquireNextImageKHR(this->device.device, this->device.swapchain, UINT64_MAX, this->imageAvailable, VK_NULL_HANDLE, &imageIndex);
 
-    this->device->dispatch.vkResetCommandBuffer(commandBuffer, 0);
-    this->device->dispatch.vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+    this->device.dispatch.vkResetCommandBuffer(commandBuffer, 0);
+    this->device.dispatch.vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
 
-    renderPassBeginInfo.renderPass = this->device->renderPass;
-    renderPassBeginInfo.renderArea.extent = this->device->swapchainImageExtent;
-    renderPassBeginInfo.framebuffer = this->device->swapchainFramebuffers[imageIndex];
-    this->device->dispatch.vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    this->device->dispatch.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    this->device->dispatch.vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-    this->device->dispatch.vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    renderPassBeginInfo.renderPass = this->device.renderPass;
+    renderPassBeginInfo.renderArea.extent = this->device.swapchainImageExtent;
+    renderPassBeginInfo.framebuffer = this->device.swapchainFramebuffers[imageIndex];
+    this->device.dispatch.vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    this->device.dispatch.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    this->device.dispatch.vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    this->device.dispatch.vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    this->device->dispatch.vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    this->device.dispatch.vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
-    this->device->dispatch.vkCmdEndRenderPass(commandBuffer);
-    this->device->dispatch.vkEndCommandBuffer(commandBuffer);
+    this->device.dispatch.vkCmdEndRenderPass(commandBuffer);
+    this->device.dispatch.vkEndCommandBuffer(commandBuffer);
 
     /* Submit rendering commands as soon as an image is available */
-    this->device->dispatch.vkQueueSubmit(this->device->deviceInfo.graphicsQueue, 1, &submitInfo, this->inFlight);
+    this->device.dispatch.vkQueueSubmit(this->device.info.graphicsQueue, 1, &submitInfo, this->inFlight);
 
     /* Present the rendered image as soon as rendering is complete */
-    this->device->dispatch.vkQueuePresentKHR(this->device->deviceInfo.presentQueue, &presentInfo);
+    this->device.dispatch.vkQueuePresentKHR(this->device.info.presentQueue, &presentInfo);
 }
 
-void VulkanRenderingAgent::present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) {
+void VulkanRenderingAgent::present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline) {
     VkCommandBuffer vkCommandBuffer;
     VkPipeline vkPipeline;
 
-    vkCommandBuffer = (reinterpret_cast<VulkanCommandBuffer *>(commandBuffer))->buffer;
-    vkPipeline = (reinterpret_cast<VulkanPipeline *>(pipeline))->pipeline;
+    vkCommandBuffer = (reinterpret_cast<VulkanCommandBuffer &>(commandBuffer)).buffer;
+    vkPipeline = (reinterpret_cast<VulkanPipeline &>(pipeline)).pipeline;
 
-    glfwShowWindow(window.handle);
-    while (!glfwWindowShouldClose(window.handle)) {
+    glfwShowWindow(this->device.window.handle);
+    while (!glfwWindowShouldClose(this->device.window.handle)) {
         glfwPollEvents();
         this->drawFrame(vkCommandBuffer, vkPipeline);
     }
-    this->device->dispatch.vkDeviceWaitIdle(this->device->device);
-    glfwHideWindow(window.handle);
+    this->device.dispatch.vkDeviceWaitIdle(this->device.device);
+    glfwHideWindow(this->device.window.handle);
 }
 
 }
