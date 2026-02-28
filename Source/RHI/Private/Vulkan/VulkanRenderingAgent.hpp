@@ -14,23 +14,27 @@ namespace Flux {
 class VulkanRenderingAgent: public RHIRenderingAgent {
 private:
 
+    static const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
     VkResult createSyncObjects(void);
 
-    void drawFrame(VkCommandBuffer commandBuffer, VkPipeline pipeline);
+    void drawFrame(uint32_t currentFrame, VkPipeline pipeline);
 
 public:
 
     VulkanDevice &device;
 
-    VkSemaphore imageAvailable;
-    VkFence inFlight;
-    VkSemaphore renderComplete;
+    VulkanCommandPool *commandPool;
+    VkCommandBuffer commandBuffers[MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore imageAvailable[MAX_FRAMES_IN_FLIGHT];
+    VkFence inFlight[MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore renderComplete[MAX_FRAMES_IN_FLIGHT];
 
     VulkanRenderingAgent(VulkanDevice &device);
 
     Status create(void);
 
-    virtual void present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline);
+    virtual void present(RHIPipeline &pipeline);
 
     virtual void destroy(void);
 

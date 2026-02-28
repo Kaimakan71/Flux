@@ -20,7 +20,7 @@ public:
 
     Status create(void);
 
-    virtual void present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline);
+    virtual void present(RHIPipeline &pipeline);
 
     virtual void destroy(void);
 

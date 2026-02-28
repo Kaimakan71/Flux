@@ -25,8 +25,6 @@ static Window window;
 static RHI *rhi = nullptr;
 static RHIDevice *device = nullptr;
 static RHIPipeline *pipeline = nullptr;
-static RHICommandPool *commandPool = nullptr;
-static RHICommandBuffer *commandBuffer = nullptr;
 static RHIRenderingAgent *renderingAgent = nullptr;
 
 static std::vector<uint8_t> loadFile(const std::filesystem::path &path) {
@@ -57,11 +55,6 @@ static void cleanup(void) {
     if (renderingAgent != nullptr) {
         renderingAgent->destroy();
         renderingAgent = nullptr;
-    }
-
-    if (commandPool != nullptr) {
-        commandPool->destroy();
-        commandPool = nullptr;
     }
 
     if (pipeline != nullptr) {
@@ -141,16 +134,6 @@ static Status initialize(void) {
         return status;
     }
 
-    status = device->createCommandPool(&commandPool);
-    if (status != Status::success) {
-        return status;
-    }
-
-    status = commandPool->allocateCommandBuffers(1, &commandBuffer);
-    if (status != Status::success) {
-        return status;
-    }
-
     status = device->createRenderingAgent(&renderingAgent);
     if (status != Status::success) {
         return status;
@@ -169,7 +152,7 @@ int main(int argc, char **argv) {
     }
 
     FLUX_LOG_INFO("Presenting window...");
-    renderingAgent->present(*commandBuffer, *pipeline);
+    renderingAgent->present(*pipeline);
 
     cleanup();
     return 0;

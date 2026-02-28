@@ -23,7 +23,7 @@ Status OpenGLRenderingAgent::create(void) {
     return Status::notImplemented;
 }
 
-void OpenGLRenderingAgent::present(RHICommandBuffer &commandBuffer, RHIPipeline &pipeline) {
+void OpenGLRenderingAgent::present(RHIPipeline &pipeline) {
 
 }
 
