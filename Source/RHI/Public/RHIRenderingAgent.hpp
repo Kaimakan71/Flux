@@ -7,12 +7,14 @@
 
 #pragma once
 
+#include "Window.hpp"
+
 namespace Flux {
 
 class RHIRenderingAgent {
 public:
 
-    virtual void beginFrame(RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) = 0;
+    virtual void present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) = 0;
 
     virtual void destroy(void) = 0;
 

@@ -16,7 +16,7 @@ public:
 
     Status create(OpenGLDevice *device);
 
-    virtual void beginFrame(RHICommandBuffer *commandBuffer, RHIPipeline *pipeline);
+    virtual void present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline);
 
     virtual void destroy(void);
 

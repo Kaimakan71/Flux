@@ -169,12 +169,7 @@ int main(int argc, char **argv) {
     }
 
     FLUX_LOG_INFO("Presenting window...");
-    glfwShowWindow(window.handle);
-    while (!glfwWindowShouldClose(window.handle)) {
-        glfwPollEvents();
-        renderingAgent->beginFrame(commandBuffer, pipeline);
-    }
-    glfwHideWindow(window.handle);
+    renderingAgent->present(window, commandBuffer, pipeline);
 
     cleanup();
     return 0;

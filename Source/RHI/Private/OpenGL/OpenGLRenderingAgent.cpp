@@ -19,7 +19,7 @@ Status OpenGLRenderingAgent::create(OpenGLDevice *device) {
     return Status::notImplemented;
 }
 
-void OpenGLRenderingAgent::beginFrame(RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) {
+void OpenGLRenderingAgent::present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) {
 
 }
 

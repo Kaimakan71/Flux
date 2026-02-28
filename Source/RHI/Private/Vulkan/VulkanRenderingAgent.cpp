@@ -91,13 +91,8 @@ Status VulkanRenderingAgent::create(VulkanDevice *device) {
     return Status::success;
 }
 
-void VulkanRenderingAgent::beginFrame(RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) {
+void VulkanRenderingAgent::drawFrame(VkCommandBuffer commandBuffer, VkPipeline pipeline) {
     uint32_t imageIndex;
-    VkCommandBuffer vkBuffer;
-    VkPipeline vkPipeline;
-
-    vkBuffer = (reinterpret_cast<VulkanCommandBuffer *>(commandBuffer))->buffer;
-    vkPipeline = (reinterpret_cast<VulkanPipeline *>(pipeline))->pipeline;
 
     static const VkCommandBufferBeginInfo commandBufferBeginInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -159,7 +154,7 @@ void VulkanRenderingAgent::beginFrame(RHICommandBuffer *commandBuffer, RHIPipeli
         .pWaitSemaphores = &this->imageAvailable,
         .pWaitDstStageMask = waitStages,
         .commandBufferCount = 1,
-        .pCommandBuffers = &vkBuffer,
+        .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = &this->renderComplete,
     };
@@ -182,27 +177,43 @@ void VulkanRenderingAgent::beginFrame(RHICommandBuffer *commandBuffer, RHIPipeli
     /* Acquire an image to render to */
     this->device->dispatch.vkAcquireNextImageKHR(this->device->device, this->device->swapchain, UINT64_MAX, this->imageAvailable, VK_NULL_HANDLE, &imageIndex);
 
-    this->device->dispatch.vkResetCommandBuffer(vkBuffer, 0);
-    this->device->dispatch.vkBeginCommandBuffer(vkBuffer, &commandBufferBeginInfo);
+    this->device->dispatch.vkResetCommandBuffer(commandBuffer, 0);
+    this->device->dispatch.vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
 
     renderPassBeginInfo.renderPass = this->device->renderPass;
     renderPassBeginInfo.renderArea.extent = this->device->swapchainImageExtent;
     renderPassBeginInfo.framebuffer = this->device->swapchainFramebuffers[imageIndex];
-    this->device->dispatch.vkCmdBeginRenderPass(vkBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    this->device->dispatch.vkCmdBindPipeline(vkBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline);
-    this->device->dispatch.vkCmdSetViewport(vkBuffer, 0, 1, &viewport);
-    this->device->dispatch.vkCmdSetScissor(vkBuffer, 0, 1, &scissor);
+    this->device->dispatch.vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    this->device->dispatch.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    this->device->dispatch.vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    this->device->dispatch.vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    this->device->dispatch.vkCmdDraw(vkBuffer, 3, 1, 0, 0);
+    this->device->dispatch.vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
-    this->device->dispatch.vkCmdEndRenderPass(vkBuffer);
-    this->device->dispatch.vkEndCommandBuffer(vkBuffer);
+    this->device->dispatch.vkCmdEndRenderPass(commandBuffer);
+    this->device->dispatch.vkEndCommandBuffer(commandBuffer);
 
     /* Submit rendering commands as soon as an image is available */
     this->device->dispatch.vkQueueSubmit(this->device->deviceInfo.graphicsQueue, 1, &submitInfo, this->inFlight);
 
     /* Present the rendered image as soon as rendering is complete */
     this->device->dispatch.vkQueuePresentKHR(this->device->deviceInfo.presentQueue, &presentInfo);
+}
+
+void VulkanRenderingAgent::present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline) {
+    VkCommandBuffer vkCommandBuffer;
+    VkPipeline vkPipeline;
+
+    vkCommandBuffer = (reinterpret_cast<VulkanCommandBuffer *>(commandBuffer))->buffer;
+    vkPipeline = (reinterpret_cast<VulkanPipeline *>(pipeline))->pipeline;
+
+    glfwShowWindow(window.handle);
+    while (!glfwWindowShouldClose(window.handle)) {
+        glfwPollEvents();
+        this->drawFrame(vkCommandBuffer, vkPipeline);
+    }
+    this->device->dispatch.vkDeviceWaitIdle(this->device->device);
+    glfwHideWindow(window.handle);
 }
 
 }

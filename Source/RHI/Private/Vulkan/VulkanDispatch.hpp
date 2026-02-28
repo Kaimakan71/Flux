@@ -57,6 +57,7 @@
     macro(vkEndCommandBuffer)                  \
     macro(vkQueueSubmit)                       \
     macro(vkQueuePresentKHR)                   \
+    macro(vkDeviceWaitIdle)                    \
     macro(vkDestroyFence)                      \
     macro(vkDestroySemaphore)                  \
     macro(vkFreeCommandBuffers)                \

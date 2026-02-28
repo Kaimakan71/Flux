@@ -22,11 +22,13 @@ private:
 
     VkResult createSyncObjects(void);
 
+    void drawFrame(VkCommandBuffer commandBuffer, VkPipeline pipeline);
+
 public:
 
     Status create(VulkanDevice *device);
 
-    virtual void beginFrame(RHICommandBuffer *commandBuffer, RHIPipeline *pipeline);
+    virtual void present(Window window, RHICommandBuffer *commandBuffer, RHIPipeline *pipeline);
 
     virtual void destroy(void);
 

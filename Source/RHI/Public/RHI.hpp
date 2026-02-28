@@ -8,7 +8,6 @@
 #pragma once
 
 #include "RHIDevice.hpp"
-#include "Window.hpp"
 
 namespace Flux {
 
