@@ -7,6 +7,7 @@
 
 #include "Log.hpp"
 #include "VulkanCommandBuffer.hpp"
+#include "VulkanLog.hpp"
 #include "VulkanResult.hpp"
 
 namespace Flux {
@@ -35,6 +36,7 @@ Status VulkanCommandPool::create(VulkanDevice *device) {
     FLUX_LOG_DEBUG("Creating command pool...");
     result = this->device->dispatch.vkCreateCommandPool(this->device->device, &createInfo, nullptr, &this->pool);
     if (result != VK_SUCCESS) {
+        FLUX_LOG_VULKAN_ERROR(result, "Failed to create command pool");
         return VulkanResult::getStatus(result);
     }
 
@@ -73,6 +75,7 @@ Status VulkanCommandPool::allocateCommandBuffers(uint32_t bufferCount, RHIComman
     FLUX_LOG_DEBUG("Allocating command buffers...");
     result = this->device->dispatch.vkAllocateCommandBuffers(this->device->device, &allocateInfo, vkBuffers);
     if (result != VK_SUCCESS) {
+        FLUX_LOG_VULKAN_ERROR(result, "Failed to allocate %u command buffer(s)", bufferCount);
         delete[] buffers;
         delete[] vkBuffers;
         return VulkanResult::getStatus(result);
