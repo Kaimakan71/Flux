@@ -5,8 +5,9 @@
  * Provided under the BSD 3-Clause license.
  */
 
+#include <filesystem>
 #include <fstream>
-#include <iostream>
+#include <vector>
 #include "Log.hpp"
 #include "RHI.hpp"
 #include "Window.hpp"
@@ -25,6 +26,28 @@ static RHI *rhi = nullptr;
 static RHIDevice *device = nullptr;
 static RHIPipeline *pipeline = nullptr;
 static RHICommandPool *commandPool = nullptr;
+
+static std::vector<uint8_t> loadFile(const std::filesystem::path &path) {
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file) {
+        throw std::runtime_error("Failed to open file");
+    }
+
+    std::streamsize size = file.tellg();
+    if (size < 0) {
+        throw std::runtime_error("Failed to get file size");
+    }
+
+    std::vector<uint8_t> buffer(static_cast<size_t>(size));
+
+    file.seekg(0, std::ios::beg);
+    if (!file.read(reinterpret_cast<char *>(buffer.data()), size)) {
+        throw std::runtime_error("Failed to read file");
+    }
+
+    file.close();
+    return buffer;
+}
 
 static void cleanup(void) {
     FLUX_LOG_INFO("Cleaning up...");
@@ -56,36 +79,21 @@ static void cleanup(void) {
 static Status initialize(void) {
     Status status;
 
+    std::vector<uint8_t> vertCode = loadFile("vert.spv");
+    std::vector<uint8_t> fragCode = loadFile("frag.spv");
+
     const RHIShaderStageDescription shaderStageDescriptions[] = {
         {
             .type = RHIShaderStageType::vertex,
-            .codeSize = 0,
-            .code = nullptr,
+            .codeSize = vertCode.size(),
+            .code = vertCode.data(),
             .entryPointName = "main",
         },
         {
             .type = RHIShaderStageType::fragment,
-            .codeSize = 0,
-            .code = nullptr,
+            .codeSize = fragCode.size(),
+            .code = fragCode.data(),
             .entryPointName = "main",
-        },
-    };
-
-    const RHIVertexInputAttributeDescription vertexInputAttributeDescriptions[] = {
-        {
-            .location = 0,
-            .componentType = RHIComponentType::float32,
-            .componentCount = 3,
-            .offset = 0,
-        },
-    };
-
-    const RHIVertexInputBindingDescription vertexInputBindingDescriptions[] = {
-        {
-            .stride = 3 * sizeof(float),
-            .inputRate = RHIVertexInputRate::vertex,
-            .attributeCount = ARRAY_SIZE(vertexInputAttributeDescriptions),
-            .attributeDescriptions = vertexInputAttributeDescriptions,
         },
     };
 
@@ -95,8 +103,8 @@ static Status initialize(void) {
         .shaderStageCount = ARRAY_SIZE(shaderStageDescriptions),
         .shaderStageDescriptions = shaderStageDescriptions,
 
-        .vertexInputBindingCount = ARRAY_SIZE(vertexInputBindingDescriptions),
-        .vertexInputBindingDescriptions = vertexInputBindingDescriptions,
+        .vertexInputBindingCount = 0,
+        .vertexInputBindingDescriptions = nullptr,
     };
 
     FLUX_LOG_INFO("Initializing...");

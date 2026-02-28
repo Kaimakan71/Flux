@@ -47,8 +47,8 @@ enum class RHIComponentType {
 typedef struct {
     RHIShaderStageType type;
     size_t codeSize;
-    const void* code;
-    const char* entryPointName;
+    const void *code;
+    const char *entryPointName;
 } RHIShaderStageDescription;
 
 typedef struct {

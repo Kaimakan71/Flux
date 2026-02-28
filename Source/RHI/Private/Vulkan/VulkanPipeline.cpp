@@ -128,6 +128,7 @@ VkResult VulkanPipeline::translateShaderStageDescriptions(uint32_t stageCount, c
         createInfo->flags = 0;
         createInfo->stage = translateShaderStageType(description->type);
         createInfo->pName = description->entryPointName;
+        createInfo->pSpecializationInfo = nullptr;
         if (createInfo->stage == VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM) {
             FLUX_LOG_ERROR("Invalid shader stage type 0x%08x", (uint32_t) description->type);
             this->destroyShaderStageCreateInfos(s, createInfos);
@@ -369,8 +370,8 @@ VkResult VulkanPipeline::createPipeline(const RHIPipelineDescription *descriptio
         .pDepthStencilState = nullptr,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicStateCreateInfo,
-        .layout = VK_NULL_HANDLE,
-        .renderPass = VK_NULL_HANDLE,
+        .layout = this->layout,
+        .renderPass = this->device->renderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,

@@ -23,7 +23,6 @@ private:
     VkExtent2D swapchainImageExtent;
     VkPresentModeKHR swapchainPresentMode;
     VkSwapchainKHR swapchain;
-    VkRenderPass renderPass;
     VkImageView *swapchainImageViews;
     VkFramebuffer *swapchainFramebuffers;
 
@@ -50,6 +49,7 @@ public:
     VulkanDeviceInfo deviceInfo;
     VkDevice device;
     VulkanDeviceDispatch dispatch;
+    VkRenderPass renderPass;
 
     static const char *getPhysicalDeviceTypeString(VkPhysicalDeviceType type);
 
